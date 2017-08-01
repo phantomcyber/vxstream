@@ -1,0 +1,4 @@
+*.py
+.git*
+.DS_Store*
+.cache*
