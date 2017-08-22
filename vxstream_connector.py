@@ -41,8 +41,6 @@ from api_classes.api_summary import ApiSummary
 from api_classes.api_result import ApiResult
 from api_classes.api_check_state import ApiCheckState
 
-requests.packages.urllib3.disable_warnings()
-
 
 class VxError(Exception):
     pass
