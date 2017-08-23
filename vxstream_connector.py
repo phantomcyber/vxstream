@@ -236,7 +236,7 @@ class VxStreamConnector(BaseConnector):
             try:
                 gzip_file_handle = gzip.GzipFile(fileobj=BytesIO(file_content))
                 f_out.write(gzip_file_handle.read())
-            except Exception as e:
+            except:
                 f_out = open(f_out_name, 'wb')
                 f_out.write(file_content)
                 f_out.close()
@@ -559,6 +559,7 @@ class VxStreamConnector(BaseConnector):
             return_value = self._get_file_from_url(param)
 
         return return_value
+
 
 if __name__ == '__main__':
 
