@@ -4,7 +4,7 @@
     "description": "This App integrates VxStream Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'.",
     "type": "sandbox",
     "main_module": "vxstream_connector.pyc",
-    "app_version": "1.1.1",
+    "app_version": "1.1.2",
     "package_name": "phantom_vxstream_sandbox",
     "product_vendor": "Payload Security",
     "product_name": "VxStream Sandbox",
@@ -1925,5 +1925,6 @@
             },
             "versions": "EQ(*)"
         }
-    ]
+    ],
+    "utctime_updated": "2017-11-30T22:44:02.000000Z"
 }
