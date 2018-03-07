@@ -1,4 +1,5 @@
 from requests.auth import HTTPBasicAuth
+import json
 
 
 class ApiCaller:
@@ -27,6 +28,7 @@ class ApiCaller:
 
     api_result_msg = ''
     api_unexpected_error_msg = 'Unexpected error has occurred (HTTP code: {}). Please try again later or connect with the support'
+    api_unexpected_error_404_msg = 'Unexpected error has occurred (HTTP code: {}). This error is mostly occurring when called webservice is outdated and so does not support current action. If you believe it is an error, please contact with the support'
     api_success_msg = 'Your request was successfully processed by VxStream Sandbox'
     api_expected_error_msg = 'API error has occurred. HTTP code: {}, API error code: {}, message: \'{}\''
     response_msg_success_nature = False
@@ -91,12 +93,20 @@ class ApiCaller:
         if self.api_response is None:
             raise Exception('It\'s not possible to get response message since API was not called.')
 
-        if self.api_response.headers['Content-Type'].startswith('text/html'):
-            self.api_result_msg = self.api_unexpected_error_msg.format(self.api_response.status_code)
+        '''
+        Unfortunately some instances can return valid json with text/html content type. 
+        So we're assuming that that case it's not 'not expected error' and in other steps,
+        we will try to get proper error message from that json.
+        '''
+        if self.api_response.headers['Content-Type'].startswith('text/html') and self.api_response.status_code != 200:
+            if self.api_response.status_code == 404:
+                self.api_result_msg = self.api_unexpected_error_404_msg.format(self.api_response.status_code)
+            else:
+                self.api_result_msg = self.api_unexpected_error_msg.format(self.api_response.status_code)
         else:
             if self.api_response.status_code == 200:
                 if self.api_expected_data_type == self.CONST_EXPECTED_DATA_TYPE_JSON:
-                    self.api_response_json = self.api_response.json()
+                    self.api_response_json = self.get_response_json()
                     if 'response_code' in self.api_response_json:  # Unfortunately not all of endpoints return the unified json.
                         if self.api_response_json['response_code'] == 0:
                             self.api_result_msg = self.api_success_msg
@@ -118,7 +128,10 @@ class ApiCaller:
                     self.api_response_json = self.api_response.json()
                     self.api_result_msg = self.api_expected_error_msg.format(self.api_response.status_code, self.api_response_json['response_code'], self.api_response_json['response']['error'])
                 else:
-                    self.api_result_msg = self.api_unexpected_error_msg.format(self.api_response.status_code)
+                    if self.api_response.status_code == 404:
+                        self.api_result_msg = self.api_unexpected_error_404_msg.format(self.api_response.status_code)
+                    else:
+                        self.api_result_msg = self.api_unexpected_error_msg.format(self.api_response.status_code)
 
         return self.api_result_msg
 
@@ -144,7 +157,28 @@ class ApiCaller:
         if self.api_response is None:
             raise Exception('It\'s not possible to get response json since API was not called.')
         elif bool(self.api_response_json) is False:
-            self.api_response_json = self.api_response.json() if self.api_response.headers['Content-Type'] == 'application/json' else {}
+            try:
+                if self.api_response.headers['Content-Type'] == 'application/json':
+                    self.api_response_json = self.api_response.json()
+                elif self.api_response.headers['Content-Type'].startswith('text/html'):
+                    # let's be more tolerant and accept situation when content type is not valid, but response has proper json
+                    self.api_response_json = json.loads(self.api_response.text)
+                else:
+                    '''
+                    Some of endpoints can return mixed content type - like file type(success) and json(controlled errors).
+                    Let's return there empty dictionary, as it's already properly handled by other project parts.
+                    '''
+                    self.api_response_json = {}
+            except ValueError:
+                '''
+                When response has status code equal 200 and we're expecting json, there should be json always.
+                Let's ignore other cases as for errors like 404, 500, we're getting html page instead.
+                That case should be handled in some other place.
+                '''
+                if self.get_response_status_code() == 200 and self.request_method_name == self.CONST_EXPECTED_DATA_TYPE_JSON:
+                    raise Exception('Failed to parse response: \'{}\''.format(self.api_response.text))
+                else:
+                    self.api_response_json = {}
 
         return self.api_response_json
 
