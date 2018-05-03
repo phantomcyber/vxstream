@@ -77,6 +77,9 @@ class VxStreamConnector(BaseConnector):
         if self._base_url.endswith('/'):
             self._base_url = self._base_url[:-1]
 
+        if self._base_url.endswith('vxstream-sandbox.com'):
+            self._base_url = self._base_url.replace('vxstream-sandbox.com', 'falcon-sandbox.com')
+
         if 'https://' not in self._base_url:
             return self.set_status(phantom.APP_ERROR, 'Base URL should starts from \'https://\'. Please correct the given URL.')
 
