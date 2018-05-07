@@ -81,7 +81,7 @@ class VxStreamConnector(BaseConnector):
             self._base_url = self._base_url.replace('vxstream-sandbox.com', 'falcon-sandbox.com')
 
         if 'https://' not in self._base_url:
-            return self.set_status(phantom.APP_ERROR, 'Base URL should starts from \'https://\'. Please correct the given URL.')
+            self.save_progress('Warning: Using encrypted connection over https is strongly recommended.')
 
         self._request_session = requests.Session()
 
