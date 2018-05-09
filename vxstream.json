@@ -1,23 +1,23 @@
 {
     "appid": "a9668cca-5aa7-4d36-93a0-7628ed31d889",
-    "name": "VxStream Sandbox",
-    "description": "This App integrates VxStream Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'.",
+    "name": "Falcon Sandbox",
+    "description": "This App integrates Falcon Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'.",
     "type": "sandbox",
     "main_module": "vxstream_connector.pyc",
     "app_version": "1.1.2",
     "package_name": "phantom_vxstream_sandbox",
-    "product_vendor": "Payload Security",
-    "product_name": "VxStream Sandbox",
+    "product_vendor": "Hybrid Analysis",
+    "product_name": "Falcon Sandbox",
     "product_version_regex": ".*",
-    "min_phantom_version": "3.0.190",
-    "publisher": "Payload Security",
+    "min_phantom_version": "3.5.206",
+    "publisher": "Hybrid Analysis",
     "consolidate_widgets": true,
     "logo": "vxstream_logo.png",
     "license": "Copyright (C) 2018 Hybrid Analysis GmbH",
     "configuration": {
         "base_url": {
             "data_type": "string",
-            "description": "Base URL to VxStream Sandbox Application Server",
+            "description": "Base URL to Falcon Sandbox Application Server",
             "required": true,
             "order": 0,
             "default": "https://hybrid-analysis.com"
@@ -34,18 +34,12 @@
             "description": "API Key",
             "order": 2,
             "required": true
-        },
-        "api_secret": {
-            "data_type": "string",
-            "description": "API Secret",
-            "order": 3,
-            "required": true
         }
     },
     "actions": [
         {
             "action": "search terms",
-            "description": "Search for samples in VxStream Sandbox database using search terms.",
+            "description": "Search for samples in Falcon Sandbox database using search terms.",
             "type": "investigate",
             "identifier": "search_terms",
             "read_only": true,
@@ -1715,6 +1709,68 @@
                 {
                     "data_path": "action_result.summary.error_msg",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "check url hash",
+            "description": "Determine a SHA256 that an online file or URL submission will have when being processed by the Falcon Sandbox.",
+            "type": "investigate",
+            "identifier": "check_url_hash",
+            "read_only": false,
+            "lock": {
+                "enabled": false
+            },
+            "render": {
+                "type": "custom",
+                "width": 12,
+                "height": 5,
+                "view": "vxstream_view.display_url_hash",
+                "title": "Sample report"
+            },
+            "parameters": {
+                "url": {
+                    "description": "Url to check",
+                    "data_type": "string",
+                    "order": 0,
+                    "contains": [
+                        "url"
+                    ],
+                    "required": true,
+                    "primary": true
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.url",
+                    "data_type": "string",
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.sha256",
+                    "data_type": "string",
+                    "contains": [
+                        "sha256"
+                    ]
                 },
                 {
                     "data_path": "summary.total_objects",

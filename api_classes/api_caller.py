@@ -61,6 +61,7 @@ class ApiCaller:
 
         caller_function = getattr(request_handler, self.request_method_name)
         headers['api-key'] = self.api_key
+        self.phantom.debug_print('sent_headers', headers)
         self.api_response = caller_function(request_url, data=self.data, params=self.params, files=self.files, headers=headers, verify=verify_server)
 
         self.phantom.debug_print('request_headers', self.api_response.headers)

@@ -33,7 +33,7 @@ import urllib
 from urlparse import urlparse
 from os.path import splitext, basename
 
-from api_classes.api_api_key_data import ApiApiKeyData
+from api_classes.api_key_current import ApiKeyCurrent
 from api_classes.api_search_terms import ApiSearchTerms
 from api_classes.api_search_hash import ApiSearchHash
 from api_classes.api_submit_file import ApiSubmitFile
@@ -41,6 +41,7 @@ from api_classes.api_submit_url_for_analysis import ApiSubmitUrlForAnalysis
 from api_classes.api_report_summary import ApiReportSummary
 from api_classes.api_report_file import ApiReportFile
 from api_classes.api_report_state import ApiReportState
+from api_classes.api_submit_hash_for_url import ApiSubmitHashForUrl
 
 
 class VxError(Exception):
@@ -65,6 +66,7 @@ class VxStreamConnector(BaseConnector):
     ACTION_ID_GET_PCAP = 'get_pcap'
     ACTION_ID_GET_FILE_FROM_URL = 'get_file_from_url'
     ACTION_ID_CHECK_STATUS = 'check_status'
+    ACTION_ID_CHECK_URL_HASH = 'check_url_hash'
 
     _base_url = ''
     _request_session = None
@@ -163,6 +165,30 @@ class VxStreamConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get status of sample with ID: \'{}\''.format(param['id']))
 
+    def _check_url_hash_partial(self, param):
+        config = self.get_config()
+        api_object = ApiSubmitHashForUrl(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_object.attach_data(param)
+
+        self._make_api_call_with_err_handling(api_object, 'Getting url hash failed.')
+
+        return api_object.get_response_json
+
+    def _check_url_hash(self, param):
+        self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        try:
+            api_response_json = self._check_url_hash_partial(param)
+        except VxError as exc:
+            action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
+            return action_result.get_status()
+
+        action_result.add_data(api_response_json)
+        action_result.set_summary(api_response_json)
+
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get hash of url: \'{}\''.format(param['url']))
+
     def _get_pcap(self, param):
         param.update({'type': 'pcap'})
 
@@ -239,7 +265,7 @@ class VxStreamConnector(BaseConnector):
         retrieved_filename_without_gz_ext, retrieved_file_extension = os.path.splitext(filename)
 
         new_file_name = retrieved_filename_without_gz_ext if retrieved_file_extension == '.gz' else filename  # As we want to unpack it, put filename without '.gz. extension
-        f_out_name = directory + '/VxStream_{}_{}_{}'.format(str(time.time()).replace('.', ''), suffix.replace(':', '_'), new_file_name)
+        f_out_name = directory + '/Falcon_{}_{}_{}'.format(str(time.time()).replace('.', ''), suffix.replace(':', '_'), new_file_name)
         if retrieved_file_extension == '.gz':
             f_out = open(f_out_name, 'wb')
             try:
@@ -436,11 +462,13 @@ class VxStreamConnector(BaseConnector):
         return self._search_terms(param)
 
     def _hunt_hash(self, param):
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
         config = self.get_config()
         api_search_object = ApiSearchHash(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         api_search_object.attach_data(param)
 
-        return self._partial_search(param, api_search_object)
+        return self._partial_search(param, api_search_object, action_result)
 
     def _hunt_malware_family(self, param):
         return self._search_terms(param)
@@ -449,23 +477,33 @@ class VxStreamConnector(BaseConnector):
         return self._search_terms(param)
 
     def _hunt_url(self, param):
-        return self._search_terms(param)
+        self.save_progress('Checking url hash in Falcon Sandbox')
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        params_for_searching = {}
+        try:
+            params_for_searching['hash'] = self._check_url_hash_partial(param)['sha256']
+        except VxError as exc:
+            action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
+            return action_result.get_status()
+
+        return self._search_terms(params_for_searching, action_result)
 
     def _hunt_ip(self, param):
         return self._search_terms(param)
 
-    def _search_terms(self, param):
-        config = self.get_config() # TODO - przemapuj wartości z configa i popatrz czy są jakieś placeholdery tutaj
+    def _search_terms(self, param, action_result=None):
+        if action_result is None:
+            action_result = self.add_action_result(ActionResult(dict(param)))
+
+        config = self.get_config()
         api_search_object = ApiSearchTerms(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
-        # TODO - ask phantom guys is there some option to have select input for actions
         api_search_object.attach_data(param)
 
-        return self._partial_search(param, api_search_object)
+        return self._partial_search(param, api_search_object, action_result)
 
-    def _partial_search(self, param, api_object):
-        self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
-        action_result = self.add_action_result(ActionResult(dict(param)))
-
+    def _partial_search(self, param, api_object, action_result):
+        self.save_progress('Searching data in Falcon Sandbox')
         try:
             self._make_api_call_with_err_handling(api_object, 'Searched failed.')
         except VxError as exc:
@@ -509,7 +547,7 @@ class VxStreamConnector(BaseConnector):
 
     def _test_connectivity(self):
         config = self.get_config()
-        api_api_key_data_object = ApiApiKeyData(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_api_key_data_object = ApiKeyCurrent(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
         try:
             self._make_api_call(api_api_key_data_object)
@@ -529,8 +567,8 @@ class VxStreamConnector(BaseConnector):
 
         api_json_response = api_api_key_data_object.get_response_json()
 
-        if api_json_response['response']['auth_level'] < 100:
-            self.save_progress('You are using API Key with \'{}\' privileges. Some of actions can not work, as they need at least \'default\' privileges. To obtain proper key, please contact with support@hybrid-analysis.com.'.format(api_json_response['response']['auth_level_name']))
+        if int(api_json_response['auth_level']) < 100:
+            self.save_progress('You are using API Key with \'{}\' privileges. Some of actions can not work, as they need at least \'default\' privileges. To obtain proper key, please contact with support@hybrid-analysis.com.'.format(api_json_response['auth_level_name']))
 
         self.save_progress(api_api_key_data_object.get_prepared_response_msg())
 
@@ -577,6 +615,8 @@ class VxStreamConnector(BaseConnector):
             return_value = self._check_status(param)
         elif action_id == self.ACTION_ID_GET_FILE_FROM_URL:
             return_value = self._get_file_from_url(param)
+        elif action_id == self.ACTION_ID_CHECK_URL_HASH:
+            return_value = self._check_url_hash(param)
 
         return return_value
 
