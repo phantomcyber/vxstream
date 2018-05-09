@@ -294,7 +294,7 @@ class VxStreamConnector(BaseConnector):
     def _get_report_partial(self, param):
         config = self.get_config()
         api_summary_object = ApiReportSummary(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
-        api_summary_object.attach_params(param) # TODO - we can add more data here
+        api_summary_object.attach_params(param)
 
         self._make_api_call_with_err_handling(api_summary_object, 'Getting report failed.')
 

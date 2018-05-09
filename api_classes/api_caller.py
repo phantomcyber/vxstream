@@ -78,14 +78,19 @@ class ApiCaller:
         return self.api_response
 
     def attach_data(self, options):
-        options.pop('context', None)
-        self.data = options
+        self.data = self.modify_params(options)
         self.build_url(self.data)
 
     def attach_params(self, params):
-        params.pop('context', None)
-        self.params = params
+        self.params = self.modify_params(params)
         self.build_url(self.params)
+
+    def modify_params(self, params):
+        params.pop('context', None)
+        if hasattr(self, 'map_params'):
+            params = self.map_params(params)
+
+        return params
 
     def attach_files(self, files):
         self.files = files

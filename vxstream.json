@@ -71,13 +71,13 @@
                     "order": 1,
                     "required": false
                 },
-                "filetype_desc": {
+                "filetype_substring": {
                     "description": "Filetype description e.g. PE32 executable",
                     "data_type": "string",
                     "order": 2,
                     "required": false
                 },
-                "env_id": {
+                "environment_id": {
                     "description": "Environment Id",
                     "data_type": "numeric",
                     "order": 3,
@@ -91,23 +91,24 @@
                 },
                 "verdict": {
                     "description": "Verdict",
+                    "value_list": ["whitelisted", "no verdict", "no specific threat", "suspicious", "malicious"],
                     "data_type": "string",
                     "order": 5,
                     "required": false
                 },
-                "av_detect": {
+                "av_detection": {
                     "description": "AV Multiscan range e.g. 50-70 (min 0, max 100)",
                     "data_type": "string",
                     "order": 6,
                     "required": false
                 },
-                "vx_family": {
+                "av_family_substring": {
                     "description": "AV Family Substring e.g. nemucod",
                     "data_type": "string",
                     "order": 7,
                     "required": false
                 },
-                "tag": {
+                "hashtag": {
                     "description": "Hashtag e.g. ransomware",
                     "data_type": "string",
                     "order": 8,
@@ -137,28 +138,34 @@
                     "order": 12,
                     "required": false
                 },
-                "similar_to": {
+                "similar_samples": {
                     "description": "Similar Samples e.g. <sha256>",
                     "data_type": "string",
                     "order": 13,
                     "required": false
                 },
-                "imp_hash": {
-                    "description": "",
+                "similar_context": {
+                    "description": "Sample Context e.g. <sha256>",
                     "data_type": "string",
                     "order": 14,
                     "required": false
-                },
-                "ssdeep": {
+                }               ,
+                "imphash": {
                     "description": "",
                     "data_type": "string",
                     "order": 15,
                     "required": false
                 },
-                "authentihash": {
+                "ssdeep": {
                     "description": "",
                     "data_type": "string",
                     "order": 16,
+                    "required": false
+                },
+                "authentihash": {
+                    "description": "",
+                    "data_type": "string",
+                    "order": 17,
                     "required": false
                 }
             },
