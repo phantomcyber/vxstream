@@ -28,21 +28,23 @@ File: ./display_report.html
         font-size: 12px;
     }
 
-    #vx-template-container .vx-table-vertical td {
-        padding: 5px;
-        border: 1px solid rgb(234, 234, 234);
+    #vx-template-container .vx-table-vertical td,
+    #vx-template-container .vx-table-vertical th {
+        padding: 9px;
     }
 
-    #vx-template-container .vx-table-vertical a:link {
-        color: black;
+    :not(.dark-theme) #vx-template-container .vx-table-vertical td,
+    :not(.dark-theme) #vx-template-container .vx-table-vertical th {
+        border: 1px solid #e7e9ec !important;
+    }
+
+    .dark-theme #vx-template-container .vx-table-vertical td,
+    .dark-theme #vx-template-container .vx-table-vertical th {
+        border: 1px solid #444357 !important;
     }
 
     #vx-template-container .vx-table-vertical a:hover {
         text-decoration:underline;
-    }
-
-    #vx-template-container .vx-table-vertical a:visited {
-        color: black;
     }
 
     #vx-template-container .vx-h3 {
@@ -59,6 +61,18 @@ File: ./display_report.html
     
     #vx-template-container .vx-clear {
         clear: both;
+    }
+
+    #vx-template-container .vx-header {
+        font-weight: 400;
+    }
+
+    #vx-template-container .vx-header span {
+        margin-right: 10px;
+    }
+
+    .dark-theme #vx-template-container .vx-header {
+        color: white;
     }
 
     #vx-template-container .vx-header .btn.btn-xs {
@@ -80,11 +94,11 @@ File: ./display_report.html
 
         <!------------------- For each Result ---------------------->
         <div>
-            <h3 class="vx-h3 vx-header">Sample report <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
+            <h3 class="vx-h3 vx-header"><span>Sample report</span> <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
         </div>
         <table class="vx-table-vertical">
             <tr>
-                <td><b>Submit Name</b></td>
+                <th class="widget-th">SUBMIT NAME</th>
                 <td>
                     {% if result.data.submit_name %}
                         <a href="javascript:;" onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ result.data.submit_name }}' }], 0, {{ container.id }}, null, false);">
@@ -98,16 +112,16 @@ File: ./display_report.html
             {% if result.data.url_analysis %}
             {% else %}
                 <tr>
-                    <td><b>File size</b></td>
+                    <th class="widget-th">FILE SIZE</th>
                     <td>{{ result.data.size|default:"-" }}</td>
                 </tr>
                 <tr>
-                    <td><b>File type</b></td>
+                    <th class="widget-th">FILE TYPE</th>
                     <td>{{ result.data.type|default:"-" }}</td>
                 </tr>
             {% endif %}
             <tr>
-                <td><b>SHA256</b></td>
+                <th class="widget-th">SHA256</th>
                 <td>
                     <a href="javascript:;" onclick="context_menu(this, [{'contains': ['sha256'], 'value': '{{ result.data.sha256 }}' }], 0, {{ container.id }}, null, false);">
                         {{ result.data.sha256 }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
@@ -115,7 +129,7 @@ File: ./display_report.html
                 </td>
             </tr>
             <tr>
-                <td><b>MD5</b></td>
+                <th class="widget-th">MD5</th>
                 <td>
                     {% if result.data.md5 %}
                         <a href="javascript:;" onclick="context_menu(this, [{'contains': ['md5'], 'value': '{{ result.data.md5 }}' }], 0, {{ container.id }}, null, false);">
@@ -124,11 +138,10 @@ File: ./display_report.html
                     {% else %}
                         -
                     {% endif %}
-
                 </td>
             </tr>
             <tr>
-                <td><b>Environment</b></td>
+                <th class="widget-th">ENVIRONMENT</th>
                 <td>
                     {% if result.data.environment_description %}
                         {{ result.data.environment_description }} ({{ result.data.environment_id }})
@@ -142,7 +155,7 @@ File: ./display_report.html
                 </td>
             </tr>
             <tr>
-                <td><b>Verdict</b></td>
+                <th class="widget-th">VERDICT</th>
                 <td>
                     {% if result.data.verdict %}
                         <span class="label label-{{ result.data.phantom_metadata.verdict_bootstrap_label }}">{{ result.data.verdict }}</span>
@@ -152,7 +165,7 @@ File: ./display_report.html
                 </td>
             </tr>
             <tr>
-                <td><b>Threat Score</b></td>
+                <th class="widget-th">THREAT SCORE</th>
                 <td>
                     {% if result.data.threat_score %}
                         {{ result.data.threat_score }}/100
@@ -162,7 +175,7 @@ File: ./display_report.html
                 </td>
             </tr>
             <tr>
-                <td><b>Classification Tags</b></td>
+                <th class="widget-th">CLASSIFICATION TAGS</th>
                 <td>
                     {% if result.data.classification_tags %}
                         {% for classification_tag in result.data.classification_tags %}
@@ -179,15 +192,15 @@ File: ./display_report.html
                 </td>
             </tr>
             <tr>
-                <td><b>Total Network Connections</b></td>
+                <th class="widget-th">TOTAL NETWORK CONNECTIONS</th>
                 <td>{{ result.data.total_network_connections }}</td>
             </tr>
             <tr>
-                <td><b>Total Processes</b></td>
+                <th class="widget-th">TOTAL PROCESSES</th>
                 <td>{{ result.data.total_processes }}</td>
             </tr>
             <tr>
-                <td><b>Total Signatures</b></td>
+                <th class="widget-th">TOTAL SIGNATURES</th>
                 <td>{{ result.data.total_signatures }}</td>
             </tr>
         </table>

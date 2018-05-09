@@ -28,21 +28,23 @@ File: ./display_report_data.html
         font-size: 12px;
     }
 
-    #vx-template-container .vx-table-vertical td {
-        padding: 5px;
-        border: 1px solid rgb(234, 234, 234);
+    #vx-template-container .vx-table-vertical td,
+    #vx-template-container .vx-table-vertical th {
+        padding: 9px;
     }
 
-    #vx-template-container .vx-table-vertical a:link {
-        color: black;
+    :not(.dark-theme) #vx-template-container .vx-table-vertical td,
+    :not(.dark-theme) #vx-template-container .vx-table-vertical th {
+        border: 1px solid #e7e9ec !important;
+    }
+
+    .dark-theme #vx-template-container .vx-table-vertical td,
+    .dark-theme #vx-template-container .vx-table-vertical th {
+        border: 1px solid #444357 !important;
     }
 
     #vx-template-container .vx-table-vertical a:hover {
         text-decoration:underline;
-    }
-
-    #vx-template-container .vx-table-vertical a:visited {
-        color: black;
     }
 
     #vx-template-container .vx-h3 {
@@ -65,14 +67,31 @@ File: ./display_report_data.html
         height: 20px;
     }
 
+    #vx-template-container .vx-header {
+        font-weight: 400;
+    }
+
+    #vx-template-container .vx-header span {
+        margin-right: 10px;
+    }
+
     #vx-template-container #vx-show-in-webservice {
         margin-top: -3px;
     }
 
+    .dark-theme #vx-template-container .vx-header {
+        color: white;
+    }
+
     #vx-template-container .vx-truncate {
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    #vx-template-container .widget-th {
+        border: none;
+        font-weight: normal;
     }
 
     /*table.vx-table-vertical tr td a span.fa-caret-down {*/
@@ -86,11 +105,11 @@ File: ./display_report_data.html
 
         <!------------------- For each Result ---------------------->
         <div>
-            <h3 class="vx-h3 vx-header">Sample report data <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
+            <h3 class="vx-h3 vx-header"><span>Sample report data</span> <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
         </div>
         <table class="vx-table-vertical">
             <tr>
-                <td><b>File Name</b></td>
+                <th class="widget-th">FILENAME</th>
                 <td>
                    <a class="vx-truncate" style="width: 380px; display: block; float: left;" href="javascript:;" onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ result.data.file_name }}' }], 0, {{ container.id }}, null, false);">
                         {{ result.data.file_name }}
@@ -99,15 +118,15 @@ File: ./display_report_data.html
                 </td>
             </tr>
             <tr>
-                <td><b>File Type</b></td>
+                <th class="widget-th">FILE TYPE</th>
                 <td>{{ result.data.file_type }}</td>
             </tr>
             <tr>
-                <td><b>Id</b></td>
+                <th class="widget-th">ID</th>
                 <td>{{ result.param.id }}</td>
             </tr>
             <tr>
-                <td><b>Vault ID</b></td>
+                <th class="widget-th">VAULT ID</th>
                 <td>
                     <a href="javascript:;" onclick="context_menu(this, [{'contains': ['vault id'], 'value': '{{ result.data.vault_id }}' }], 0, {{ container.id }}, null, false);">
                         {{ result.data.vault_id }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>

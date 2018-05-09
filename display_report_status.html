@@ -28,21 +28,23 @@ File: ./display_report_data.html
         font-size: 12px;
     }
 
-    #vx-template-container .vx-table-vertical td {
-        padding: 5px;
-        border: 1px solid rgb(234, 234, 234);
+    #vx-template-container .vx-table-vertical td,
+    #vx-template-container .vx-table-vertical th {
+        padding: 9px;
     }
 
-    #vx-template-container .vx-table-vertical a:link {
-        color: black;
+    :not(.dark-theme) #vx-template-container .vx-table-vertical td,
+    :not(.dark-theme) #vx-template-container .vx-table-vertical th {
+        border: 1px solid #e7e9ec !important;
+    }
+
+    .dark-theme #vx-template-container .vx-table-vertical td,
+    .dark-theme #vx-template-container .vx-table-vertical th {
+        border: 1px solid #444357 !important;
     }
 
     #vx-template-container .vx-table-vertical a:hover {
         text-decoration:underline;
-    }
-
-    #vx-template-container .vx-table-vertical a:visited {
-        color: black;
     }
 
     #vx-template-container .vx-h3 {
@@ -63,6 +65,18 @@ File: ./display_report_data.html
 
     #vx-template-container .vx-header .btn.btn-xs {
         height: 20px;
+    }
+
+    #vx-template-container .vx-header {
+        font-weight: 400;
+    }
+
+    #vx-template-container .vx-header span {
+        margin-right: 10px;
+    }
+
+    .dark-theme #vx-template-container .vx-header {
+        color: white;
     }
 
     #vx-template-container #vx-show-in-webservice {
@@ -86,22 +100,22 @@ File: ./display_report_data.html
 
         <!------------------- For each Result ---------------------->
         <div>
-            <h3 class="vx-h3 vx-header">Sample report status <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
+            <h3 class="vx-h3 vx-header"><span>Sample report status</span> <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
         </div>
         <table class="vx-table-vertical">
             <tr>
-                <td><b>ID</b></td>
+                <th class="widget-th">ID</th>
                 <td>
                     {{ result.param.id }}
                 </td>
             </tr>
             <tr>
-                <td><b>Status</b></td>
+                <th class="widget-th">STATUS</th>
                 <td>{{ result.data.status }}</td>
             </tr>
             {% if result.data.error_msg %}
                 <tr>
-                    <td><b>Error Message</b></td>
+                    <th class="widget-th">ERROR MESSAGE</th>
                     <td>{{ result.data.error_msg }}</td>
                 </tr>
             {% endif %}
