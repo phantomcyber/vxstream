@@ -86,16 +86,16 @@ File: ./display_report.html
             <tr>
                 <td><b>Submit Name</b></td>
                 <td>
-                    {% if result.data.submitname %}
-                        <a href="javascript:;" onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ result.data.submitname }}' }], 0, {{ container.id }}, null, false);">
-                            {{ result.data.submitname }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                    {% if result.data.submit_name %}
+                        <a href="javascript:;" onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ result.data.submit_name }}' }], 0, {{ container.id }}, null, false);">
+                            {{ result.data.submit_name }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
                         </a>
                     {% else %}
                         -
                     {% endif %}
                 </td>
             </tr>
-            {% if result.data.isurlanalysis %}
+            {% if result.data.url_analysis %}
             {% else %}
                 <tr>
                     <td><b>File size</b></td>
@@ -130,11 +130,11 @@ File: ./display_report.html
             <tr>
                 <td><b>Environment</b></td>
                 <td>
-                    {% if result.data.environmentDescription %}
-                        {{ result.data.environmentDescription }} ({{ result.data.environmentId }})
+                    {% if result.data.environment_description %}
+                        {{ result.data.environment_description }} ({{ result.data.environment_id }})
                     {% else %}
-                        {% if result.data.environmentId %}
-                            {{ result.data.environmentId }}
+                        {% if result.data.environment_id %}
+                            {{ result.data.environment_id }}
                         {% else %}
                             -
                         {% endif %}
@@ -154,8 +154,8 @@ File: ./display_report.html
             <tr>
                 <td><b>Threat Score</b></td>
                 <td>
-                    {% if result.data.threatscore %}
-                        {{ result.data.threatscore }}/100
+                    {% if result.data.threat_score %}
+                        {{ result.data.threat_score }}/100
                     {% else %}
                         -
                     {% endif %}

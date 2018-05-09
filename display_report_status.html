@@ -90,16 +90,10 @@ File: ./display_report_data.html
         </div>
         <table class="vx-table-vertical">
             <tr>
-                <td><b>SHA256</b></td>
+                <td><b>ID</b></td>
                 <td>
-                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['sha256'], 'value': '{{ result.param.sha256 }}' }], 0, {{ container.id }}, null, false);">
-                        {{ result.param.sha256 }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
-                    </a>
+                    {{ result.param.id }}
                 </td>
-            </tr>
-            <tr>
-                <td><b>Environment ID</b></td>
-                <td>{{ result.param.environment_id }}</td>
             </tr>
             <tr>
                 <td><b>Status</b></td>
