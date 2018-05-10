@@ -47,6 +47,10 @@ File: ./display_report.html
         text-decoration:underline;
     }
 
+    #vx-template-container .vx-table-vertical a#verdict-link:hover {
+        text-decoration: none;
+    }
+
     #vx-template-container .vx-h3 {
         font-size : 20px
     }
@@ -109,6 +113,16 @@ File: ./display_report.html
                     {% endif %}
                 </td>
             </tr>
+            {% if result.data.target_url %}
+                <tr>
+                    <th class="widget-th">TARGET URL</th>
+                    <td>
+                        <a href="javascript:;" onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ result.data.target_url }}' }], 0, {{ container.id }}, null, false);">
+                            {{ result.data.target_url }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                        </a>
+                    </td>
+                </tr>
+            {% endif %}
             {% if result.data.url_analysis %}
             {% else %}
                 <tr>
@@ -116,10 +130,18 @@ File: ./display_report.html
                     <td>{{ result.data.size|default:"-" }}</td>
                 </tr>
                 <tr>
-                    <th class="widget-th">FILE TYPE</th>
+                    <th class="widget-th">FILE TYPE DESCRIPTION</th>
                     <td>{{ result.data.type|default:"-" }}</td>
                 </tr>
             {% endif %}
+            <tr>
+                <th class="widget-th">JOB ID</th>
+                <td>
+                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['falcon sandbox job id'], 'value': '{{ result.data.job_id }}' }], 0, {{ container.id }}, null, false);">
+                        {{ result.data.job_id }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                    </a>
+                </td>
+            </tr>
             <tr>
                 <th class="widget-th">SHA256</th>
                 <td>
@@ -158,7 +180,10 @@ File: ./display_report.html
                 <th class="widget-th">VERDICT</th>
                 <td>
                     {% if result.data.verdict %}
-                        <span class="label label-{{ result.data.phantom_metadata.verdict_bootstrap_label }}">{{ result.data.verdict }}</span>
+                        <a id="verdict-link" href="javascript:;" onclick="context_menu(this, [{'contains': ['falcon sandbox verdict'], 'value': '{{ result.data.verdict }}' }], 0, {{ container.id }}, null, false);">
+                            <span class="label label-{{ result.data.verdict_label }}">{{ result.data.verdict }}</span>
+                            <span class="fa fa-caret-down"></span>
+                        </a>
                     {% else %}
                         -
                     {% endif %}
@@ -179,13 +204,37 @@ File: ./display_report.html
                 <td>
                     {% if result.data.classification_tags %}
                         {% for classification_tag in result.data.classification_tags %}
-                            <a href="javascript:;" onclick="context_menu(this, [{'contains': ['malware family'], 'value': '{{ classification_tag }}' }], 0, {{ container.id }}, null, false);">
+                            <a href="javascript:;" onclick="context_menu(this, [{'contains': ['malware family', 'falcon sandbox tag'], 'value': '{{ classification_tag }}' }], 0, {{ container.id }}, null, false);">
                                 {{ classification_tag }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
                             </a>
                             {% if not forloop.last %}
                                 ,
                             {% endif %}
                         {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th class="widget-th">SSDEEP</th>
+                <td>
+                    {% if result.data.ssdeep %}
+                        <a href="javascript:;" onclick="context_menu(this, [{'contains': ['ssdeep'], 'value': '{{ result.data.ssdeep }}' }], 0, {{ container.id }}, null, false);">
+                            {{ result.data.ssdeep }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                        </a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th class="widget-th">IMPHASH</th>
+                <td>
+                    {% if result.data.imphash %}
+                        <a href="javascript:;" onclick="context_menu(this, [{'contains': ['imphash'], 'value': '{{ result.data.imphash }}' }], 0, {{ container.id }}, null, false);">
+                            {{ result.data.imphash }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                        </a>
                     {% else %}
                         -
                     {% endif %}

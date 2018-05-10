@@ -53,20 +53,34 @@
                 "height": 5
             },
             "parameters": {
-                "filename": {
-                    "description": "Filename e.g. invoice.exe",
+                "file_name": {
+                    "description": "File name e.g. invoice.exe",
                     "data_type": "string",
+                    "contains": [
+                        "file name"
+                    ],
                     "order": 0,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
-                "filetype": {
-                    "description": "Filetype e.g. docx",
+                "file_type": {
+                    "description": "File type e.g. docx",
                     "data_type": "string",
+                    "value_list": [
+                        "64bits", "android", "assembly", "bat", "cmd", "data",
+                         "doc", "docx", "elf", "empty", "flash", "html", "hwp",
+                         "img", "java", "javascript", "library", "lnk", "macho", "mshelp",
+                         "msi", "native", "neexe", "pdf", "pedll", "peexe", "perl",
+                         "ppt", "pptx", "ps", "pub", "python", "rtf", "script",
+                         "sct", "sh", "svg", "text", "url", "vbe", "vbs",
+                         "wsf", "xls", "xlsx"
+                    ],
                     "order": 1,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
-                "filetype_substring": {
-                    "description": "Filetype description e.g. PE32 executable",
+                "file_type_substring": {
+                    "description": "File type description e.g. PE32 executable",
                     "data_type": "string",
                     "order": 2,
                     "required": false
@@ -85,10 +99,20 @@
                 },
                 "verdict": {
                     "description": "Verdict",
-                    "value_list": ["whitelisted", "no verdict", "no specific threat", "suspicious", "malicious"],
+                    "value_list": [
+                        "whitelisted",
+                        "no verdict",
+                        "no specific threat",
+                        "suspicious",
+                        "malicious"
+                    ],
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "order": 5,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "av_detection": {
                     "description": "AV Multiscan range e.g. 50-70 (min 0, max 100)",
@@ -99,32 +123,52 @@
                 "av_family_substring": {
                     "description": "AV Family Substring e.g. nemucod",
                     "data_type": "string",
+                    "contains": [
+                        "malware family"
+                    ],
                     "order": 7,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "hashtag": {
                     "description": "Hashtag e.g. ransomware",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox tag"
+                    ],
                     "order": 8,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "port": {
                     "description": "Port e.g. 8080",
                     "data_type": "numeric",
+                    "contains": [
+                        "port"
+                    ],
                     "order": 9,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "host": {
                     "description": "Host e.g. 192.168.0.1",
                     "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ],
                     "order": 10,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "domain": {
                     "description": "Domain e.g. checkip.dyndns.org",
                     "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ],
                     "order": 11,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "url": {
                     "description": "HTTP Request Substring e.g. google",
@@ -135,26 +179,42 @@
                 "similar_samples": {
                     "description": "Similar Samples e.g. <sha256>",
                     "data_type": "string",
+                    "contains": [
+                        "sha256"
+                    ],
                     "order": 13,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "similar_context": {
                     "description": "Sample Context e.g. <sha256>",
                     "data_type": "string",
+                    "contains": [
+                        "sha256"
+                    ],
                     "order": 14,
-                    "required": false
-                }               ,
+                    "required": false,
+                    "primary": true
+                },
                 "imphash": {
                     "description": "",
                     "data_type": "string",
+                    "contains": [
+                        "imphash"
+                    ],
                     "order": 15,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "ssdeep": {
                     "description": "",
                     "data_type": "string",
+                    "contains": [
+                        "ssdeep"
+                    ],
                     "order": 16,
-                    "required": false
+                    "required": false,
+                    "primary": true
                 },
                 "authentihash": {
                     "description": "",
@@ -182,16 +242,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -210,6 +266,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -220,8 +280,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -231,7 +294,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -318,16 +381,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -346,6 +405,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -356,8 +419,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -367,7 +433,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -454,16 +520,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -482,6 +544,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -492,8 +558,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -503,7 +572,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -544,7 +613,7 @@
             ],
             "versions": "EQ(*)"
         },
-                {
+        {
             "action": "hunt hash",
             "description": "Search for a file by one kind of hash(Sha1, Md5, Sha256) in the Falcon Sandbox database.",
             "type": "investigate",
@@ -592,16 +661,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -620,6 +685,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -630,8 +699,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -641,7 +713,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -684,7 +756,7 @@
         },
         {
             "action": "hunt file",
-            "description": "Search for a file by one kind of data(Sha1, Md5, Sha256 or Filename) in the Falcon Sandbox database.",
+            "description": "Search for a file by one kind of data(Sha1, Md5, Sha256 or File name) in the Falcon Sandbox database.",
             "type": "investigate",
             "identifier": "hunt_file",
             "read_only": true,
@@ -698,8 +770,8 @@
                 "height": 5
             },
             "parameters": {
-                "filename": {
-                    "description": "Filename",
+                "file_name": {
+                    "description": "File name",
                     "data_type": "string",
                     "contains": [
                         "file name"
@@ -728,16 +800,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -756,6 +824,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -766,8 +838,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -777,7 +852,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -864,16 +939,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -892,6 +963,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -902,8 +977,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -913,7 +991,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -1000,16 +1078,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -1028,6 +1102,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -1038,8 +1116,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -1049,7 +1130,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -1136,16 +1217,12 @@
                     "column_order": 0
                 },
                 {
-                    "data_path": "action_result.data.*.type",
-                    "data_type": "string"
-                },
-                {
-                    "data_path": "action_result.data.*.size",
+                    "data_path": "action_result.data.*.job_id",
                     "data_type": "string",
                     "contains": [
-                        "file size"
+                        "falcon sandbox job id"
                     ],
-                    "column_name": "File Size",
+                    "column_name": "Job Id",
                     "column_order": 1
                 },
                 {
@@ -1164,6 +1241,10 @@
                     "column_order": 3
                 },
                 {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
@@ -1174,8 +1255,11 @@
                 {
                     "data_path": "action_result.data.*.verdict",
                     "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ],
                     "column_name": "Verdict",
-                    "column_order": 5
+                    "column_order": 4
                 },
                 {
                     "data_path": "action_result.data.*.threat_score",
@@ -1185,7 +1269,7 @@
                     "data_path": "action_result.data.*.threat_score_verbose",
                     "data_type": "string",
                     "column_name": "Threat Score",
-                    "column_order": 6
+                    "column_order": 5
                 },
                 {
                     "data_path": "action_result.summary.found",
@@ -1320,21 +1404,15 @@
                 "enabled": false
             },
             "parameters": {
-                "sha256": {
-                    "description": "Sample Sha256 hash",
+                "id": {
+                    "description": "Sample Id in one of format: 'jobId' or 'sha256:environmentId'",
                     "data_type": "string",
                     "order": 0,
                     "contains": [
-                        "sha256"
+                        "falcon sandbox job id"
                     ],
                     "required": true,
                     "primary": true
-                },
-                "environment_id": {
-                    "description": "Environment ID",
-                    "data_type": "numeric",
-                    "order": 1,
-                    "required": true
                 }
             },
             "render": {
@@ -1425,6 +1503,9 @@
                     "description": "Sample Id in one of format: 'jobId' or 'sha256:environmentId'",
                     "data_type": "string",
                     "order": 0,
+                    "contains": [
+                        "falcon sandbox job id"
+                    ],
                     "required": true,
                     "primary": true
                 },
@@ -1447,7 +1528,8 @@
                     ],
                     "default": "xml",
                     "order": 1,
-                    "required": true
+                    "required": true,
+                    "primary": true
                 }
             },
             "render": {
@@ -1490,7 +1572,10 @@
                 },
                 {
                     "data_path": "action_result.parameter.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
                 },
                 {
                     "data_path": "action_result.summary.file_name",
@@ -1542,6 +1627,9 @@
                     "description": "Sample Id in one of format: 'jobId' or 'sha256:environmentId'",
                     "data_type": "string",
                     "order": 0,
+                    "contains": [
+                        "falcon sandbox job id"
+                    ],
                     "required": true,
                     "primary": true
                 }
@@ -1556,14 +1644,28 @@
                     "data_type": "string"
                 },
                 {
-                    "data_path": "action_result.data.*.environmentId",
+                    "data_path": "action_result.data.job_id",
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.submitname",
+                    "data_path": "action_result.data.*.submit_name",
                     "data_type": "string",
                     "contains": [
                         "file name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.target_url",
+                    "data_type": "string",
+                    "contains": [
+                        "url"
                     ]
                 },
                 {
@@ -1599,35 +1701,66 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_path": "action_result.data.*.ssdeep",
                     "data_type": "string",
                     "contains": [
-                        "malware family"
+                        "ssdeep"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.isurlanalysis",
+                    "data_path": "action_result.data.*.imphash",
+                    "data_type": "string",
+                    "contains": [
+                        "imphash"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_type": "string",
+                    "contains": [
+                        "malware family",
+                        "falcon sandbox tag"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.url_analysis",
                     "data_type": "boolean"
                 },
                 {
-                    "data_path": "action_result.data.*.threatscore",
+                    "data_path": "action_result.data.*.threat_score",
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.isinteresting",
+                    "data_path": "action_result.data.*.interesting",
                     "data_type": "boolean"
                 },
                 {
                     "data_path": "action_result.data.*.verdict",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.domains.*",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.hosts.*",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.compromised_hosts.*",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.total_network_connections",
@@ -1643,7 +1776,10 @@
                 },
                 {
                     "data_path": "action_result.parameter.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
                 },
                 {
                     "data_path": "summary.total_objects",
@@ -1670,6 +1806,9 @@
                     "description": "Sample Id in one of format: 'jobId' or 'sha256:environmentId'",
                     "data_type": "string",
                     "order": 0,
+                    "contains": [
+                        "falcon sandbox job id"
+                    ],
                     "required": true,
                     "primary": true
                 }
@@ -1692,7 +1831,10 @@
                 },
                 {
                     "data_path": "action_result.parameter.id",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.status",
@@ -1801,7 +1943,7 @@
             },
             "parameters": {
                 "url": {
-                    "description": "URL",
+                    "description": "Url",
                     "data_type": "string",
                     "order": 0,
                     "contains": [
@@ -1811,7 +1953,7 @@
                     "primary": true
                 },
                 "environment_id": {
-                    "description": "Environment ID",
+                    "description": "Environment Id",
                     "data_type": "numeric",
                     "order": 1,
                     "required": true
@@ -1838,15 +1980,40 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.environmentId",
+                    "data_path": "action_result.data.job_id",
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.submitname",
+                    "data_path": "action_result.data.*.submit_name",
                     "data_type": "string",
                     "contains": [
                         "file name"
                     ]
+                },
+                {
+                    "data_path": "action_result.data.*.target_url",
+                    "data_type": "string",
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.size",
+                    "data_type": "string",
+                    "contains": [
+                        "file size"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.sha256",
@@ -1870,35 +2037,262 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_path": "action_result.data.*.ssdeep",
                     "data_type": "string",
                     "contains": [
-                        "malware family"
+                        "ssdeep"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.isurlanalysis",
+                    "data_path": "action_result.data.*.imphash",
+                    "data_type": "string",
+                    "contains": [
+                        "imphash"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_type": "string",
+                    "contains": [
+                        "malware family",
+                        "falcon sandbox tag"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.url_analysis",
                     "data_type": "boolean"
                 },
                 {
-                    "data_path": "action_result.data.*.threatscore",
+                    "data_path": "action_result.data.*.threat_score",
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.isinteresting",
+                    "data_path": "action_result.data.*.interesting",
                     "data_type": "boolean"
                 },
                 {
                     "data_path": "action_result.data.*.verdict",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.domains.*",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.hosts.*",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.compromised_hosts.*",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.total_network_connections",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.total_processes",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.total_signatures",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric"
+                }
+            ],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "detonate online file",
+            "description": "Detonate an online file in the Falcon Sandbox.",
+            "type": "investigate",
+            "identifier": "detonate_online_file",
+            "read_only": false,
+            "lock": {
+                "enabled": false
+            },
+            "render": {
+                "type": "custom",
+                "width": 12,
+                "height": 5,
+                "view": "vxstream_view.display_report",
+                "title": "Sample report"
+            },
+            "parameters": {
+                "url": {
+                    "description": "Url",
+                    "data_type": "string",
+                    "order": 0,
+                    "contains": [
+                        "url"
+                    ],
+                    "required": true,
+                    "primary": true
+                },
+                "environment_id": {
+                    "description": "Environment Id",
+                    "data_type": "numeric",
+                    "order": 1,
+                    "required": true
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
                     "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.parameter.environment_id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.parameter.url",
+                    "data_type": "string",
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.job_id",
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.environment_id",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.submit_name",
+                    "data_type": "string",
+                    "contains": [
+                        "file name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.target_url",
+                    "data_type": "string",
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.size",
+                    "data_type": "string",
+                    "contains": [
+                        "file size"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.type",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.sha256",
+                    "data_type": "string",
+                    "contains": [
+                        "sha256"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.md5",
+                    "data_type": "string",
+                    "contains": [
+                        "md5"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.sha1",
+                    "data_type": "string",
+                    "contains": [
+                        "sha1"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.ssdeep",
+                    "data_type": "string",
+                    "contains": [
+                        "ssdeep"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.imphash",
+                    "data_type": "string",
+                    "contains": [
+                        "imphash"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_type": "string",
+                    "contains": [
+                        "malware family",
+                        "falcon sandbox tag"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.url_analysis",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.threat_score",
+                    "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.data.*.interesting",
+                    "data_type": "boolean"
+                },
+                {
+                    "data_path": "action_result.data.*.verdict",
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.domains.*",
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.hosts.*",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.compromised_hosts.*",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.total_network_connections",
@@ -1957,7 +2351,7 @@
                     "required": true
                 },
                 "file_name": {
-                    "description": "Filename to use",
+                    "description": "File name to use",
                     "verbose": "This value will be passed to the Falcon Sandbox as the name of the file that is pickup up from the vault",
                     "data_type": "string",
                     "contains": [
@@ -1995,14 +2389,28 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.environmentId",
+                    "data_path": "action_result.data.job_id",
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox job id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.environment_id",
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.submitname",
+                    "data_path": "action_result.data.*.submit_name",
                     "data_type": "string",
                     "contains": [
                         "file name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.target_url",
+                    "data_type": "string",
+                    "contains": [
+                        "url"
                     ]
                 },
                 {
@@ -2038,35 +2446,66 @@
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_path": "action_result.data.*.ssdeep",
                     "data_type": "string",
                     "contains": [
-                        "malware family"
+                        "ssdeep"
                     ]
                 },
                 {
-                    "data_path": "action_result.data.*.isurlanalysis",
+                    "data_path": "action_result.data.*.imphash",
+                    "data_type": "string",
+                    "contains": [
+                        "imphash"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.classification_tags.*",
+                    "data_type": "string",
+                    "contains": [
+                        "malware family",
+                        "falcon sandbox tag"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.url_analysis",
                     "data_type": "boolean"
                 },
                 {
-                    "data_path": "action_result.data.*.threatscore",
+                    "data_path": "action_result.data.*.threat_score",
                     "data_type": "numeric"
                 },
                 {
-                    "data_path": "action_result.data.*.isinteresting",
+                    "data_path": "action_result.data.*.interesting",
                     "data_type": "boolean"
                 },
                 {
                     "data_path": "action_result.data.*.verdict",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "falcon sandbox verdict"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.domains.*",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "domain"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.hosts.*",
-                    "data_type": "string"
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.compromised_hosts.*",
+                    "data_type": "string",
+                    "contains": [
+                        "ip"
+                    ]
                 },
                 {
                     "data_path": "action_result.data.*.total_network_connections",

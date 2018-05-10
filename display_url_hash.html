@@ -106,7 +106,9 @@ File: ./display_report_data.html
             <tr>
                 <th class="widget-th">URL</th>
                 <td>
-                    {{ result.param.url }}
+                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ result.param.url }}' }], 0, {{ container.id }}, null, false);">
+                        {{ result.param.url }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                    </a>
                 </td>
             </tr>
             <tr>

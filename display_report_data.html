@@ -109,7 +109,7 @@ File: ./display_report_data.html
         </div>
         <table class="vx-table-vertical">
             <tr>
-                <th class="widget-th">FILENAME</th>
+                <th class="widget-th">FILE NAME</th>
                 <td>
                    <a class="vx-truncate" style="width: 380px; display: block; float: left;" href="javascript:;" onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ result.data.file_name }}' }], 0, {{ container.id }}, null, false);">
                         {{ result.data.file_name }}
@@ -123,7 +123,11 @@ File: ./display_report_data.html
             </tr>
             <tr>
                 <th class="widget-th">ID</th>
-                <td>{{ result.param.id }}</td>
+                <td>
+                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['falcon sandbox job id'], 'value': '{{ result.param.id }}' }], 0, {{ container.id }}, null, false);">
+                        {{ result.param.id }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                    </a>
+                </td>
             </tr>
             <tr>
                 <th class="widget-th">VAULT ID</th>

@@ -6,13 +6,15 @@ class ApiSearchTerms(ApiCaller):
     endpoint_auth_level = ApiCaller.CONST_API_AUTH_LEVEL_RESTRICTED
     request_method_name = ApiCaller.CONST_REQUEST_METHOD_POST
     params_map = {
-        'filetype_substring': 'filetype_desc',
+        'file_type_substring': 'filetype_desc',
         'environment_id': 'env_id',
         'av_detection': 'av_detect',
         'av_family_substring': 'vx_family',
         'hashtag': 'tag',
         'similar_samples': 'similar_to',
         'imphash': 'imp_hash',
+        'file_type': 'filetype',
+        'file_name': 'filename',
     }
 
     verdict_map = {

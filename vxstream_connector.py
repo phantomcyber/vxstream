@@ -37,6 +37,7 @@ from api_classes.api_key_current import ApiKeyCurrent
 from api_classes.api_search_terms import ApiSearchTerms
 from api_classes.api_search_hash import ApiSearchHash
 from api_classes.api_submit_file import ApiSubmitFile
+from api_classes.api_submit_online_file import ApiSubmitOnlineFile
 from api_classes.api_submit_url_for_analysis import ApiSubmitUrlForAnalysis
 from api_classes.api_report_summary import ApiReportSummary
 from api_classes.api_report_file import ApiReportFile
@@ -53,6 +54,7 @@ class VxStreamConnector(BaseConnector):
     ACTION_ID_TEST_ASSET_CONNECTIVITY = 'test_asset_connectivity'
     ACTION_ID_DETONATE_URL = 'detonate_url'
     ACTION_ID_DETONATE_FILE = 'detonate_file'
+    ACTION_ID_DETONATE_ONLINE_FILE = 'detonate_online_file'
     ACTION_ID_GET_REPORT = 'get_report'
     ACTION_ID_SEARCH_TERMS = 'search_terms'
     ACTION_ID_HUNT_FILE = 'hunt_file'
@@ -136,7 +138,7 @@ class VxStreamConnector(BaseConnector):
         else:
             url = '/sample/{}'.format(id)
 
-        return url
+        return '{}{}'.format(self._base_url, url)
 
     def _check_status_partial(self, param):
         config = self.get_config()
@@ -190,7 +192,7 @@ class VxStreamConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get hash of url: \'{}\''.format(param['url']))
 
     def _get_pcap(self, param):
-        param.update({'type': 'pcap'})
+        param.update({'file_type': 'pcap'})
 
         return self._get_file(param)
 
@@ -324,18 +326,28 @@ class VxStreamConnector(BaseConnector):
 
         self._make_api_call_with_err_handling(api_summary_object, 'Getting report failed.')
 
-        api_response_json = api_summary_object.get_response_json() # TODO - można wprowdzić do phantoma specjalny typ danych id lub sha256envid
+        api_response_json = api_summary_object.get_response_json()
         api_response_json['sample_url'] = self._build_sample_url(param['id'])
+        verdict_label_map = {
+            'malicious': 'danger',
+            'suspicious': 'warning',
+            'no specific threat': 'success',
+            'whitelisted': 'info',
+            'no verdict': 'default'
+        }
+        if api_response_json['verdict']:
+            api_response_json['verdict_label'] = verdict_label_map[api_response_json['verdict']]
 
         return {'api_object': api_summary_object, 'prepared_json_response': api_response_json}
 
     def _get_report(self, param):
         self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
-        action_result = self.add_action_result(ActionResult(dict(param))) # TODO - check bs3 labels here
+        action_result = self.add_action_result(ActionResult(dict(param)))
 
         try:
             partial_results = self._get_report_partial(param)
             api_response_json = partial_results['prepared_json_response']
+
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
@@ -409,12 +421,12 @@ class VxStreamConnector(BaseConnector):
             return partial_results['prepared_json_response']
 
     def _detonate_url(self, param):
-        config = self.get_config() # todo - zostaje pytanie co robimy dalej z urlami z których się ściąga dane
+        config = self.get_config()
         api_submit_file_object = ApiSubmitUrlForAnalysis(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         self.save_progress(PAYLOAD_SECURITY_MSG_SUBMITTING_FILE)
 
         action_result = self.add_action_result(ActionResult(dict(param)))
-        api_submit_file_object.attach_data({'environment_id': param['environment_id'], 'url': param['url']})
+        api_submit_file_object.attach_data(param)
 
         try:
             self._make_api_call_with_err_handling(api_submit_file_object, 'URL submit failed.')
@@ -452,11 +464,30 @@ class VxStreamConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
 
+    def _detonate_online_file(self, param):
+        config = self.get_config()
+        api_submit_file_object = ApiSubmitOnlineFile(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        self.save_progress(PAYLOAD_SECURITY_MSG_SUBMITTING_FILE)
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        api_submit_file_object.attach_data(param)
+
+        try:
+            self._make_api_call_with_err_handling(api_submit_file_object, 'Online file submit failed.')
+            report_api_json_response = self._detonation_partial(param, api_submit_file_object)
+        except VxError as exc:
+            action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
+            return action_result.get_status()
+
+        action_result.add_data(report_api_json_response)
+
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
+
     def _convert_verdict_name_to_key(self, verdict_name):
         return verdict_name.replace(' ', '_')
 
     def _hunt_similar(self, param):
-        return self._search_terms(param)
+        return self._search_terms({'similar_to': param['sha256']})
 
     def _hunt_file(self, param):
         return self._search_terms(param)
@@ -471,7 +502,7 @@ class VxStreamConnector(BaseConnector):
         return self._partial_search(param, api_search_object, action_result)
 
     def _hunt_malware_family(self, param):
-        return self._search_terms(param)
+        return self._search_terms({'vx_family': param['malware_family']})
 
     def _hunt_domain(self, param):
         return self._search_terms(param)
@@ -587,6 +618,8 @@ class VxStreamConnector(BaseConnector):
             return_value = self._test_connectivity()
         elif action_id == self.ACTION_ID_DETONATE_FILE:
             return_value = self._detonate_file(param)
+        elif action_id == self.ACTION_ID_DETONATE_ONLINE_FILE:
+            return_value = self._detonate_online_file(param)
         elif action_id == self.ACTION_ID_DETONATE_URL:
             return_value = self._detonate_url(param)
         elif action_id == self.ACTION_ID_GET_REPORT:
