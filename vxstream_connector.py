@@ -174,7 +174,7 @@ class VxStreamConnector(BaseConnector):
 
         self._make_api_call_with_err_handling(api_object, 'Getting url hash failed.')
 
-        return api_object.get_response_json
+        return api_object.get_response_json()
 
     def _check_url_hash(self, param):
         self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
@@ -187,7 +187,6 @@ class VxStreamConnector(BaseConnector):
             return action_result.get_status()
 
         action_result.add_data(api_response_json)
-        action_result.set_summary(api_response_json)
 
         return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get hash of url: \'{}\''.format(param['url']))
 
@@ -492,8 +491,9 @@ class VxStreamConnector(BaseConnector):
     def _hunt_file(self, param):
         return self._search_terms(param)
 
-    def _hunt_hash(self, param):
-        action_result = self.add_action_result(ActionResult(dict(param)))
+    def _hunt_hash(self, param, action_result=None):
+        if action_result is None:
+            action_result = self.add_action_result(ActionResult(dict(param)))
 
         config = self.get_config()
         api_search_object = ApiSearchHash(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
@@ -518,16 +518,14 @@ class VxStreamConnector(BaseConnector):
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
 
-        return self._search_terms(params_for_searching, action_result)
+        return self._hunt_hash(params_for_searching, action_result)
 
     def _hunt_ip(self, param):
         return self._search_terms(param)
 
-    def _search_terms(self, param, action_result=None):
-        if action_result is None:
-            action_result = self.add_action_result(ActionResult(dict(param)))
-
+    def _search_terms(self, param):
         config = self.get_config()
+        action_result = self.add_action_result(ActionResult(dict(param)))
         api_search_object = ApiSearchTerms(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         api_search_object.attach_data(param)
 

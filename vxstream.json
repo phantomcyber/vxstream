@@ -1877,7 +1877,7 @@
                 "width": 12,
                 "height": 5,
                 "view": "vxstream_view.display_url_hash",
-                "title": "Sample report"
+                "title": "Url hash"
             },
             "parameters": {
                 "url": {
