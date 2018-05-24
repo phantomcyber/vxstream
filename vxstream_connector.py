@@ -1,7 +1,7 @@
 # --
 # File: vxstream_connector.py
 #
-# Copyright (C) 2017 Payload Security UG (haftungsbeschrankt)
+# Copyright (C) 2018 Hybrid Analysis GmbH
 #
 # --
 
@@ -33,13 +33,16 @@ import urllib
 from urlparse import urlparse
 from os.path import splitext, basename
 
-from api_classes.api_api_key_data import ApiApiKeyData
-from api_classes.api_search import ApiSearch
+from api_classes.api_key_current import ApiKeyCurrent
+from api_classes.api_search_terms import ApiSearchTerms
+from api_classes.api_search_hash import ApiSearchHash
 from api_classes.api_submit_file import ApiSubmitFile
-from api_classes.api_submit_url import ApiSubmitUrl
-from api_classes.api_summary import ApiSummary
-from api_classes.api_result import ApiResult
-from api_classes.api_check_state import ApiCheckState
+from api_classes.api_submit_online_file import ApiSubmitOnlineFile
+from api_classes.api_submit_url_for_analysis import ApiSubmitUrlForAnalysis
+from api_classes.api_report_summary import ApiReportSummary
+from api_classes.api_report_file import ApiReportFile
+from api_classes.api_report_state import ApiReportState
+from api_classes.api_submit_hash_for_url import ApiSubmitHashForUrl
 
 
 class VxError(Exception):
@@ -51,9 +54,11 @@ class VxStreamConnector(BaseConnector):
     ACTION_ID_TEST_ASSET_CONNECTIVITY = 'test_asset_connectivity'
     ACTION_ID_DETONATE_URL = 'detonate_url'
     ACTION_ID_DETONATE_FILE = 'detonate_file'
+    ACTION_ID_DETONATE_ONLINE_FILE = 'detonate_online_file'
     ACTION_ID_GET_REPORT = 'get_report'
-    ACTION_ID_RUN_QUERY = 'run_query'
+    ACTION_ID_SEARCH_TERMS = 'search_terms'
     ACTION_ID_HUNT_FILE = 'hunt_file'
+    ACTION_ID_HUNT_HASH = 'hunt_hash'
     ACTION_ID_HUNT_IP = 'hunt_ip'
     ACTION_ID_HUNT_URL = 'hunt_url'
     ACTION_ID_HUNT_DOMAIN = 'hunt_domain'
@@ -63,6 +68,7 @@ class VxStreamConnector(BaseConnector):
     ACTION_ID_GET_PCAP = 'get_pcap'
     ACTION_ID_GET_FILE_FROM_URL = 'get_file_from_url'
     ACTION_ID_CHECK_STATUS = 'check_status'
+    ACTION_ID_CHECK_URL_HASH = 'check_url_hash'
 
     _base_url = ''
     _request_session = None
@@ -81,7 +87,7 @@ class VxStreamConnector(BaseConnector):
             self._base_url = self._base_url.replace('vxstream-sandbox.com', 'falcon-sandbox.com')
 
         if 'https://' not in self._base_url:
-            return self.set_status(phantom.APP_ERROR, 'Base URL should starts from \'https://\'. Please correct the given URL.')
+            self.save_progress('Warning: Using encrypted connection over https is strongly recommended.')
 
         self._request_session = requests.Session()
 
@@ -91,9 +97,6 @@ class VxStreamConnector(BaseConnector):
         self.set_status(phantom.APP_ERROR, 'Unexpected error has occurred')
 
         return self.get_status()
-
-    def _if_request_failed(self, api_object):
-        return api_object.get_response_msg_success_nature() is False
 
     def _get_file_dict(self, param, action_result):
         vault_id = param['vault_id']
@@ -120,22 +123,27 @@ class VxStreamConnector(BaseConnector):
         except requests.exceptions.RequestException as exc:
             raise VxError('{} Connection to server failed. Error: \'{}\''.format(base_err_msg, str(exc)))
 
-        if self._if_request_failed(api_object) is True:
+        if api_object.if_request_success() is False:
             raise VxError('{} {}'.format(base_err_msg, api_object.get_prepared_response_msg()))
 
         return api_object
 
-    def _build_sample_url(self, url_params):
-        sample_url = '{}/sample/{}'.format(self._base_url, url_params['sha256'])
-        if 'environment_id' in url_params and url_params['environment_id'] is not None:
-            sample_url = '{}?environmentId={}'.format(sample_url, url_params['environment_id'])
+    def _build_sample_url(self, id):
+        if ':' in id:
+            sha256, env_id = id.split(':')
 
-        return sample_url
+            url = '/sample/{}?environmentId={}'.format(sha256, env_id)
+        elif len(id) == 24:
+            url = '/sample/{}/find'.format(id)
+        else:
+            url = '/sample/{}'.format(id)
+
+        return '{}{}'.format(self._base_url, url)
 
     def _check_status_partial(self, param):
         config = self.get_config()
-        api_check_state = ApiCheckState(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
-        api_check_state.attach_params({'environmentId': param['environment_id'], 'sha256': param['sha256']})
+        api_check_state = ApiReportState(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_check_state.attach_params({'id': param['id']})
 
         return self._make_api_call_with_err_handling(api_check_state, 'Getting sample status failed.')
 
@@ -149,27 +157,51 @@ class VxStreamConnector(BaseConnector):
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
 
-        api_response_json = api_check_state.get_response_json()['response']
-        api_response_json['sample_url'] = self._build_sample_url(param)
+        api_response_json = api_check_state.get_response_json()
+        api_response_json['sample_url'] = self._build_sample_url(param['id'])
         api_response_json['status'] = api_response_json['state']
         api_response_json['error_msg'] = '' if 'error' not in api_response_json else api_response_json['error']
 
         action_result.add_data(api_response_json)
         action_result.set_summary(api_response_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get status of sample with sha256: \'{}\' and environment ID: \'{}\''.format(param['sha256'], param['environment_id']))
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get status of sample with ID: \'{}\''.format(param['id']))
+
+    def _check_url_hash_partial(self, param):
+        config = self.get_config()
+        api_object = ApiSubmitHashForUrl(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_object.attach_data(param)
+
+        self._make_api_call_with_err_handling(api_object, 'Getting url hash failed.')
+
+        return api_object.get_response_json()
+
+    def _check_url_hash(self, param):
+        self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        try:
+            api_response_json = self._check_url_hash_partial(param)
+        except VxError as exc:
+            action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
+            return action_result.get_status()
+
+        action_result.add_data(api_response_json)
+
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get hash of url: \'{}\''.format(param['url']))
 
     def _get_pcap(self, param):
         param.update({'file_type': 'pcap'})
+
         return self._get_file(param)
 
     def _get_file(self, param):
         config = self.get_config()
-        api_result_object = ApiResult(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
+        api_result_object = ApiReportFile(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
-        api_result_object.attach_params({'environmentId': param['environment_id'], 'sha256': param['sha256'], 'type': param['file_type']})
+        api_result_object.attach_params({'id': param['id'], 'type': param['file_type']})
 
         try:
             self._make_api_call_with_err_handling(api_result_object, 'Getting file failed.')
@@ -177,8 +209,9 @@ class VxStreamConnector(BaseConnector):
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
 
-        data = self._save_file_to_vault(action_result, api_result_object.get_api_response(), param['sha256'] + '#' + param['environment_id'], param['file_type'])
-        data['sample_url'] = self._build_sample_url(param)
+        api_response = api_result_object.get_api_response()
+        data = self._save_file_to_vault(action_result, api_response, api_response.headers['Vx-Filename'], param['id'], param['file_type'])
+        data['sample_url'] = self._build_sample_url(param['id'])
 
         action_result.add_data(data)
         action_result.set_summary(data)
@@ -229,17 +262,18 @@ class VxStreamConnector(BaseConnector):
 
         return action_result.get_status()
 
-    def _save_file(self, directory, file_content, file_name_suffix, file_type):
-        f_out_name = directory + '/VxStream_{}_{}.{}'.format(str(time.time()).replace('.', ''), file_name_suffix, file_type)
-        if file_type == 'memory':
-            f_out_name += '.zip'
+    def _save_file(self, directory, file_content, filename, suffix):
+        retrieved_filename_without_gz_ext, retrieved_file_extension = os.path.splitext(filename)
 
-        if file_type in ['xml', 'html', 'bin', 'pcap']:
+        new_file_name = retrieved_filename_without_gz_ext if retrieved_file_extension == '.gz' else filename  # As we want to unpack it, put filename without '.gz. extension
+        f_out_name = directory + '/Falcon_{}_{}_{}'.format(str(time.time()).replace('.', ''), suffix.replace(':', '_'), new_file_name)
+        if retrieved_file_extension == '.gz':
             f_out = open(f_out_name, 'wb')
             try:
                 gzip_file_handle = gzip.GzipFile(fileobj=BytesIO(file_content))
                 f_out.write(gzip_file_handle.read())
-            except:
+            except Exception as e:
+                f_out_name += retrieved_file_extension
                 f_out = open(f_out_name, 'wb')
                 f_out.write(file_content)
                 f_out.close()
@@ -251,8 +285,7 @@ class VxStreamConnector(BaseConnector):
 
         return f_out_name
 
-    def _save_file_to_vault(self, action_result, response, file_name_suffix, file_type):
-
+    def _save_file_to_vault(self, action_result, response, filename, suffix, file_type):
         # Create a tmp directory on the vault partition
         guid = uuid.uuid4()
         local_dir = '/vault/tmp/{}'.format(guid)
@@ -263,7 +296,7 @@ class VxStreamConnector(BaseConnector):
         except Exception as e:
             return action_result.set_status(phantom.APP_ERROR, "Unable to create temporary folder '/vault/tmp'.", e)
 
-        file_path = self._save_file(local_dir, response.content, file_name_suffix, file_type)
+        file_path = self._save_file(local_dir, response.content, filename, suffix)
 
         # move the file to the vault
         vault_ret_dict = Vault.add_attachment(file_path, self.get_container_id(), file_name=os.path.basename(file_path))
@@ -287,18 +320,22 @@ class VxStreamConnector(BaseConnector):
 
     def _get_report_partial(self, param):
         config = self.get_config()
-        api_summary_object = ApiSummary(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
-        api_summary_object.attach_params({'environmentId': param['environment_id'], 'hash': param['hash']})
+        api_summary_object = ApiReportSummary(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_summary_object.attach_params(param)
 
         self._make_api_call_with_err_handling(api_summary_object, 'Getting report failed.')
 
-        api_response_json = api_summary_object.get_response_json()['response']
-        api_response_json['sample_url'] = self._build_sample_url({'sha256': api_response_json['sha256'], 'environment_id': api_response_json['environmentId']})
-        if 'threatscore' not in api_response_json:
-            api_response_json['threatscore'] = ''
-
-        if 'submitname' not in api_response_json:
-            api_response_json['submitname'] = ''
+        api_response_json = api_summary_object.get_response_json()
+        api_response_json['sample_url'] = self._build_sample_url(param['id'])
+        verdict_label_map = {
+            'malicious': 'danger',
+            'suspicious': 'warning',
+            'no specific threat': 'success',
+            'whitelisted': 'info',
+            'no verdict': 'default'
+        }
+        if api_response_json['verdict']:
+            api_response_json['verdict_label'] = verdict_label_map[api_response_json['verdict']]
 
         return {'api_object': api_summary_object, 'prepared_json_response': api_response_json}
 
@@ -309,19 +346,22 @@ class VxStreamConnector(BaseConnector):
         try:
             partial_results = self._get_report_partial(param)
             api_response_json = partial_results['prepared_json_response']
+
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
 
         action_result.add_data(api_response_json)
 
-        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get summary of sample with hash: \'{}\' and environment ID: \'{}\''.format(param['hash'], param['environment_id']))
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get summary of sample with Id: \'{}\''.format(param['id']))
 
     def _detonation_partial(self, param, detonation_api_object):
         api_response_json = detonation_api_object.get_response_json()
+        sample_sha_256 = api_response_json['sha256']
+        sample_env_id = param['environment_id']
+        sample_id = '{}:{}'.format(sample_sha_256, sample_env_id)
         sample_params = {
-            'sha256': api_response_json['response']['sha256'],
-            'environment_id': param['environment_id']
+            'id': sample_id
         }
         final_check_status_response = None
         start_time_of_checking = time.time()
@@ -332,7 +372,7 @@ class VxStreamConnector(BaseConnector):
                                                                                                                        PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
             time.sleep(PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS)
             api_check_state = self._check_status_partial(sample_params)
-            api_response_json = api_check_state.get_response_json()['response']
+            api_response_json = api_check_state.get_response_json()
             final_check_status_response = api_response_json
 
             if api_response_json['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS:
@@ -342,7 +382,7 @@ class VxStreamConnector(BaseConnector):
                                                                                                                                   PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
                     time.sleep(PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS)
                     api_check_state = self._check_status_partial(sample_params)
-                    api_response_json = api_check_state.get_response_json()['response']
+                    api_response_json = api_check_state.get_response_json()
                     final_check_status_response = api_response_json
                     self.save_progress(
                         PAYLOAD_SECURITY_MSG_CHECKED_STATE.format(api_response_json['state'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"), y + 1,
@@ -372,20 +412,20 @@ class VxStreamConnector(BaseConnector):
         if final_check_status_response['state'] in [PAYLOAD_SECURITY_SAMPLE_STATE_IN_QUEUE, PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS]:
             raise VxError('Action reached the analysis timeout. Last state is \'{}\'. You can still observe the state using \'check status\' action and after successful analysis, retrieve results by \'get report\' action.'.format(final_check_status_response['state']))
         elif final_check_status_response['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_ERROR:
-            raise VxError('During the analysis, error has occurred: \'{}\'. For more possible information, please visit sample page({}) and/or Payload Security Knowledge Base.'.format(
-                                         final_check_status_response['error'], self._build_sample_url({'sha256': sample_params['sha256'], 'environment_id': sample_params['environment_id']})))
+            raise VxError('During the analysis, error has occurred: \'{}\'. For more possible information, please visit sample page({}) and/or Hybrid Analysis Knowledge Base.'.format(
+                                         final_check_status_response['error'], self._build_sample_url(sample_id)))
         else:
             self.save_progress(PAYLOAD_SECURITY_MSG_DETONATION_QUERYING_REPORT)
-            partial_results = self._get_report_partial({'environment_id': sample_params['environment_id'], 'hash': sample_params['sha256']})
+            partial_results = self._get_report_partial({'id': sample_id})
             return partial_results['prepared_json_response']
 
     def _detonate_url(self, param):
         config = self.get_config()
-        api_submit_file_object = ApiSubmitUrl(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
+        api_submit_file_object = ApiSubmitUrlForAnalysis(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         self.save_progress(PAYLOAD_SECURITY_MSG_SUBMITTING_FILE)
 
         action_result = self.add_action_result(ActionResult(dict(param)))
-        api_submit_file_object.attach_data({'environmentId': param['environment_id'], 'analyzeurl': param['url']})
+        api_submit_file_object.attach_data(param)
 
         try:
             self._make_api_call_with_err_handling(api_submit_file_object, 'URL submit failed.')
@@ -400,7 +440,7 @@ class VxStreamConnector(BaseConnector):
 
     def _detonate_file(self, param):
         config = self.get_config()
-        api_submit_file_object = ApiSubmitFile(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
+        api_submit_file_object = ApiSubmitFile(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         self.save_progress(PAYLOAD_SECURITY_MSG_SUBMITTING_FILE)
 
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -410,10 +450,29 @@ class VxStreamConnector(BaseConnector):
             return action_result.get_status()
 
         api_submit_file_object.attach_files(files)
-        api_submit_file_object.attach_data({'environmentId': param['environment_id']})
+        api_submit_file_object.attach_data({'environment_id': param['environment_id']})
 
         try:
             self._make_api_call_with_err_handling(api_submit_file_object, 'File submit failed.')
+            report_api_json_response = self._detonation_partial(param, api_submit_file_object)
+        except VxError as exc:
+            action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
+            return action_result.get_status()
+
+        action_result.add_data(report_api_json_response)
+
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
+
+    def _detonate_online_file(self, param):
+        config = self.get_config()
+        api_submit_file_object = ApiSubmitOnlineFile(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        self.save_progress(PAYLOAD_SECURITY_MSG_SUBMITTING_FILE)
+
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        api_submit_file_object.attach_data(param)
+
+        try:
+            self._make_api_call_with_err_handling(api_submit_file_object, 'Online file submit failed.')
             report_api_json_response = self._detonation_partial(param, api_submit_file_object)
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
@@ -427,64 +486,87 @@ class VxStreamConnector(BaseConnector):
         return verdict_name.replace(' ', '_')
 
     def _hunt_similar(self, param):
-        return self._run_query({'query': 'similar-to:' + param['sha256']}, self.add_action_result(ActionResult(dict(param))))
+        return self._search_terms({'similar_to': param['sha256']})
 
     def _hunt_file(self, param):
-        return self._run_query({'query': param['file_identificator']}, self.add_action_result(ActionResult(dict(param))))
+        return self._search_terms(param)
 
-    def _hunt_malware_family(self, param):
-        return self._run_query({'query': 'tag:' + param['malware_family']}, self.add_action_result(ActionResult(dict(param))))
-
-    def _hunt_domain(self, param):
-        return self._run_query({'query': 'domain:' + param['domain']}, self.add_action_result(ActionResult(dict(param))))
-
-    def _hunt_url(self, param):
-        return self._run_query({'query': 'url:' + param['url']}, self.add_action_result(ActionResult(dict(param))))
-
-    def _hunt_ip(self, param):
-        return self._run_query({'query': 'host:' + param['ip']}, self.add_action_result(ActionResult(dict(param))))
-
-    def _run_query(self, param, action_result=None):
-        config = self.get_config()
-        api_search_object = ApiSearch(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
-        self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
-
+    def _hunt_hash(self, param, action_result=None):
         if action_result is None:
             action_result = self.add_action_result(ActionResult(dict(param)))
-        api_search_object.attach_params({'query': param['query']})
 
+        config = self.get_config()
+        api_search_object = ApiSearchHash(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_search_object.attach_data(param)
+
+        return self._partial_search(param, api_search_object, action_result)
+
+    def _hunt_malware_family(self, param):
+        return self._search_terms({'vx_family': param['malware_family']})
+
+    def _hunt_domain(self, param):
+        return self._search_terms(param)
+
+    def _hunt_url(self, param):
+        self.save_progress('Checking url hash in Falcon Sandbox')
+        action_result = self.add_action_result(ActionResult(dict(param)))
+
+        params_for_searching = {}
         try:
-            self._make_api_call_with_err_handling(api_search_object, 'Searched failed.')
+            params_for_searching['hash'] = self._check_url_hash_partial(param)['sha256']
+        except VxError as exc:
+            action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
+            return action_result.get_status()
+
+        return self._hunt_hash(params_for_searching, action_result)
+
+    def _hunt_ip(self, param):
+        return self._search_terms(param)
+
+    def _search_terms(self, param):
+        config = self.get_config()
+        action_result = self.add_action_result(ActionResult(dict(param)))
+        api_search_object = ApiSearchTerms(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
+        api_search_object.attach_data(param)
+
+        return self._partial_search(param, api_search_object, action_result)
+
+    def _partial_search(self, param, api_object, action_result):
+        self.save_progress('Searching data in Falcon Sandbox')
+        try:
+            self._make_api_call_with_err_handling(api_object, 'Searched failed.')
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
 
         verdict_summary = dict.fromkeys([self._convert_verdict_name_to_key(verdict_name) for verdict_name in PAYLOAD_SECURITY_SAMPLE_VERDICT_NAMES], 0)
-        api_response_json = api_search_object.get_response_json()
-        for search_row in api_response_json['response']['result']:
+        api_response_json = api_object.get_response_json()
+        data = api_response_json if 'hash' in param else api_response_json['result']
+
+        for search_row in data:
             verdict_summary[self._convert_verdict_name_to_key(search_row['verdict'])] += 1
             environment = None
             threatscore_verbose = None
 
-            if search_row['environmentDescription'] is not None:
-                environment = search_row['environmentDescription']
+            if search_row['environment_description'] is not None:
+                environment = search_row['environment_description']
 
-            if search_row['environmentId'] is not None:
+            if search_row['environment_id'] is not None:
                 if environment is not None:
-                    environment = '{} ({})'.format(environment, search_row['environmentId'])
+                    environment = '{} ({})'.format(environment, search_row['environment_id'])
                 else:
-                    environment = '{}'.format(search_row['environmentId'])
+                    environment = '{}'.format(search_row['environment_id'])
 
-            if search_row['threatscore'] is not None:
-                threatscore_verbose = str(search_row['threatscore']) + '/100'
+            if search_row['threat_score'] is not None:
+                threatscore_verbose = str(search_row['threat_score']) + '/100'
 
             search_row['environment'] = environment
-            search_row['threatscore_verbose'] = threatscore_verbose
+            search_row['threat_score_verbose'] = threatscore_verbose
 
             action_result.add_data(search_row)
 
         summary = {
-            'found': len(api_response_json['response']['result']),
+            'found': len(data),
             'found_by_verdict_name': verdict_summary
         }
 
@@ -494,7 +576,7 @@ class VxStreamConnector(BaseConnector):
 
     def _test_connectivity(self):
         config = self.get_config()
-        api_api_key_data_object = ApiApiKeyData(config[PAYLOAD_SECURITY_API_KEY], config[PAYLOAD_SECURITY_API_SECRET], self._base_url, self)
+        api_api_key_data_object = ApiKeyCurrent(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         self.save_progress(PAYLOAD_SECURITY_MSG_QUERYING)
         try:
             self._make_api_call(api_api_key_data_object)
@@ -507,15 +589,15 @@ class VxStreamConnector(BaseConnector):
             self.set_status(phantom.APP_ERROR, 'Connectivity test failed')
             return self.get_status()
 
-        if self._if_request_failed(api_api_key_data_object) is True:
+        if api_api_key_data_object.if_request_success() is False:
             self.save_progress(api_api_key_data_object.get_prepared_response_msg())
             self.set_status(phantom.APP_ERROR, 'Connectivity test failed')
             return self.get_status()
 
         api_json_response = api_api_key_data_object.get_response_json()
 
-        if api_json_response['response']['auth_level'] < 100:
-            self.save_progress('You are using API Key with \'{}\' privileges. Some of actions can not work, as they need at least \'default\' privileges. To obtain proper key, please contact with support@payload-security.com.'.format(api_json_response['response']['auth_level_name']))
+        if int(api_json_response['auth_level']) < 100:
+            self.save_progress('You are using API Key with \'{}\' privileges. Some of actions can not work, as they need at least \'default\' privileges. To obtain proper key, please contact with support@hybrid-analysis.com.'.format(api_json_response['auth_level_name']))
 
         self.save_progress(api_api_key_data_object.get_prepared_response_msg())
 
@@ -534,6 +616,8 @@ class VxStreamConnector(BaseConnector):
             return_value = self._test_connectivity()
         elif action_id == self.ACTION_ID_DETONATE_FILE:
             return_value = self._detonate_file(param)
+        elif action_id == self.ACTION_ID_DETONATE_ONLINE_FILE:
+            return_value = self._detonate_online_file(param)
         elif action_id == self.ACTION_ID_DETONATE_URL:
             return_value = self._detonate_url(param)
         elif action_id == self.ACTION_ID_GET_REPORT:
@@ -542,10 +626,12 @@ class VxStreamConnector(BaseConnector):
             return_value = self._get_file(param)
         elif action_id == self.ACTION_ID_GET_PCAP:
             return_value = self._get_pcap(param)
-        elif action_id == self.ACTION_ID_RUN_QUERY:
-            return_value = self._run_query(param)
+        elif action_id == self.ACTION_ID_SEARCH_TERMS:
+            return_value = self._search_terms(param)
         elif action_id == self.ACTION_ID_HUNT_FILE:
             return_value = self._hunt_file(param)
+        elif action_id == self.ACTION_ID_HUNT_HASH:
+            return_value = self._hunt_hash(param)
         elif action_id == self.ACTION_ID_HUNT_IP:
             return_value = self._hunt_ip(param)
         elif action_id == self.ACTION_ID_HUNT_URL:
@@ -560,6 +646,8 @@ class VxStreamConnector(BaseConnector):
             return_value = self._check_status(param)
         elif action_id == self.ACTION_ID_GET_FILE_FROM_URL:
             return_value = self._get_file_from_url(param)
+        elif action_id == self.ACTION_ID_CHECK_URL_HASH:
+            return_value = self._check_url_hash(param)
 
         return return_value
 

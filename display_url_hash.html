@@ -53,14 +53,6 @@ File: ./display_report_data.html
     #vx-template-container .vx-h5 {
         font-size : 14px
     }
-    
-    #vx-template-container .vx-clear {
-        clear: both;
-    }
-
-    #vx-template-container .vx-header .btn.btn-xs {
-        height: 20px;
-    }
 
     #vx-template-container .vx-header {
         font-weight: 400;
@@ -72,6 +64,14 @@ File: ./display_report_data.html
 
     .dark-theme #vx-template-container .vx-header {
         color: white;
+    }
+    
+    #vx-template-container .vx-clear {
+        clear: both;
+    }
+
+    #vx-template-container .vx-header .btn.btn-xs {
+        height: 20px;
     }
 
     #vx-template-container #vx-show-in-webservice {
@@ -95,27 +95,25 @@ File: ./display_report_data.html
 
         <!------------------- For each Result ---------------------->
         <div>
-            <h3 class="vx-h3 vx-header"><span>Sample report status</span> <a href="{{ result.data.sample_url }}" id="vx-show-in-webservice" class="btn btn-xs btn-phantom-purple" target="_blank">Show in WebService <i class="glyphicon glyphicon-menu-right"></i></a></h3>
+            <h3 class="vx-h3 vx-header"><span>Url hash</span></h3>
         </div>
         <table class="vx-table-vertical">
             <tr>
-                <th class="widget-th">ID</th>
+                <th class="widget-th">URL</th>
                 <td>
-                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['falcon sandbox job id'], 'value': '{{ result.param.id }}' }], 0, {{ container.id }}, null, false);">
-                        {{ result.param.id }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ result.param.url }}' }], 0, {{ container.id }}, null, false);">
+                        {{ result.param.url }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
                     </a>
                 </td>
             </tr>
             <tr>
-                <th class="widget-th">STATUS</th>
-                <td>{{ result.data.status }}</td>
+                <th class="widget-th">SHA256</th>
+                <td>
+                    <a href="javascript:;" onclick="context_menu(this, [{'contains': ['sha256'], 'value': '{{ result.data.sha256 }}' }], 0, {{ container.id }}, null, false);">
+                        {{ result.data.sha256 }}<span>&nbsp;</span><span class="fa fa-caret-down"></span>
+                    </a>
+                </td>
             </tr>
-            {% if result.data.error_msg %}
-                <tr>
-                    <th class="widget-th">ERROR MESSAGE</th>
-                    <td>{{ result.data.error_msg }}</td>
-                </tr>
-            {% endif %}
         </table>
 
         <!------------------- For each Result END ---------------------->
