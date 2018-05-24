@@ -1,5 +1,5 @@
 # init.py
 #
-# Copyright (C) 2017 Payload Security UG (haftungsbeschrankt)
+# Copyright (C) 2018 Hybrid Analysis GmbH
 #
 # --
