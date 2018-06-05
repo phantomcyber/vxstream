@@ -1,7 +1,7 @@
 {
     "appid": "8383852c-43dc-4356-ac81-4e6dd65ee23e",
     "name": "Falcon Sandbox",
-    "description": "This App integrates Falcon Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'.",
+    "description": "This App integrates Falcon Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'",
     "type": "sandbox",
     "main_module": "vxstream_connector.pyc",
     "app_version": "1.1.4",
@@ -40,7 +40,7 @@
     "actions": [
         {
             "action": "search terms",
-            "description": "Search for samples in Falcon Sandbox database using search terms.",
+            "description": "Search for samples in Falcon Sandbox database using search terms",
             "type": "investigate",
             "identifier": "search_terms",
             "read_only": true,
@@ -486,7 +486,7 @@
         },
         {
             "action": "hunt similar",
-            "description": "Search for similar samples by given Sha256 hash in the Falcon Sandbox database.",
+            "description": "Search for similar samples by given Sha256 hash in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_similar",
             "read_only": true,
@@ -632,7 +632,7 @@
         },
         {
             "action": "hunt ip",
-            "description": "Search for a given IP in the Falcon Sandbox database.",
+            "description": "Search for a given IP in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_ip",
             "read_only": true,
@@ -778,7 +778,7 @@
         },
         {
             "action": "hunt hash",
-            "description": "Search for a file by one kind of hash(Sha1, Md5, Sha256) in the Falcon Sandbox database.",
+            "description": "Search for a file by one kind of hash(Sha1, Md5, Sha256) in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_hash",
             "read_only": true,
@@ -928,7 +928,7 @@
         },
         {
             "action": "hunt file",
-            "description": "Search for a file by one kind of data(Sha1, Md5, Sha256 or File name) in the Falcon Sandbox database.",
+            "description": "Search for a file by one kind of data(Sha1, Md5, Sha256 or File name) in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_file",
             "read_only": true,
@@ -1074,7 +1074,7 @@
         },
         {
             "action": "hunt malware family",
-            "description": "Search for a given malware family in the Falcon Sandbox database.",
+            "description": "Search for a given malware family in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_malware_family",
             "read_only": true,
@@ -1220,7 +1220,7 @@
         },
         {
             "action": "hunt domain",
-            "description": "Search for a given domain in the Falcon Sandbox database.",
+            "description": "Search for a given domain in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_domain",
             "read_only": true,
@@ -1366,7 +1366,7 @@
         },
         {
             "action": "hunt url",
-            "description": "Search for a given URL in the Falcon Sandbox database.",
+            "description": "Search for a given URL in the Falcon Sandbox database",
             "type": "investigate",
             "identifier": "hunt_url",
             "read_only": true,
@@ -1512,7 +1512,7 @@
         },
         {
             "action": "get file from url",
-            "description": "Download file from a url.",
+            "description": "Download file from a url",
             "type": "investigate",
             "identifier": "get_file_from_url",
             "read_only": true,
@@ -1596,7 +1596,7 @@
         },
         {
             "action": "get pcap",
-            "description": "Download the pcap file of sample from Falcon Sandbox and add it to vault.",
+            "description": "Download the pcap file of sample from Falcon Sandbox and add it to vault",
             "type": "investigate",
             "identifier": "get_pcap",
             "read_only": true,
@@ -1687,7 +1687,7 @@
         },
         {
             "action": "get file",
-            "description": "Download sample result data from Falcon Sandbox and add it to vault.",
+            "description": "Download sample result data from Falcon Sandbox and add it to vault",
             "type": "investigate",
             "identifier": "get_file",
             "read_only": true,
@@ -1804,7 +1804,7 @@
         },
         {
             "action": "get report",
-            "description": "Fetch results of an already completed analysis in the Falcon Sandbox.",
+            "description": "Fetch results of an already completed analysis in the Falcon Sandbox",
             "type": "investigate",
             "identifier": "get_report",
             "read_only": true,
@@ -1990,7 +1990,7 @@
         },
         {
             "action": "check status",
-            "description": "Check status of sample (file or URL) submitted in the Falcon Sandbox.",
+            "description": "Check status of sample (file or URL) submitted in the Falcon Sandbox",
             "type": "investigate",
             "identifier": "check_status",
             "read_only": true,
@@ -2061,7 +2061,7 @@
         },
         {
             "action": "check url hash",
-            "description": "Determine a SHA256 that an online file or URL submission will have when being processed by the Falcon Sandbox.",
+            "description": "Determine a SHA256 that an online file or URL submission will have when being processed by the Falcon Sandbox",
             "type": "investigate",
             "identifier": "check_url_hash",
             "read_only": false,
@@ -2123,7 +2123,7 @@
         },
         {
             "action": "detonate url",
-            "description": "Detonate a URL in the Falcon Sandbox.",
+            "description": "Detonate a URL in the Falcon Sandbox",
             "type": "investigate",
             "identifier": "detonate_url",
             "read_only": false,
@@ -2319,7 +2319,7 @@
         },
         {
             "action": "detonate online file",
-            "description": "Detonate an online file in the Falcon Sandbox.",
+            "description": "Detonate an online file in the Falcon Sandbox",
             "type": "investigate",
             "identifier": "detonate_online_file",
             "read_only": false,
@@ -2515,7 +2515,7 @@
         },
         {
             "action": "detonate file",
-            "description": "Detonate the file in the Falcon Sandbox.",
+            "description": "Detonate the file in the Falcon Sandbox",
             "type": "investigate",
             "identifier": "detonate_file",
             "read_only": false,
@@ -2728,7 +2728,7 @@
         },
         {
             "action": "test connectivity",
-            "description": "Validate the asset configuration for connectivity.",
+            "description": "Validate the asset configuration for connectivity",
             "type": "test",
             "identifier": "test_asset_connectivity",
             "read_only": true,
