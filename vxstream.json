@@ -4,7 +4,7 @@
     "description": "This App integrates Falcon Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'",
     "type": "sandbox",
     "main_module": "vxstream_connector.pyc",
-    "app_version": "1.1.4",
+    "app_version": "1.1.5",
     "package_name": "phantom_vxstream_sandbox",
     "product_vendor": "Hybrid Analysis",
     "product_name": "Falcon Sandbox",
@@ -2740,5 +2740,5 @@
             "versions": "EQ(*)"
         }
     ],
-    "utctime_updated": "2018-06-05T17:58:41.000000Z"
+    "utctime_updated": "2018-06-05T22:59:10.000000Z"
 }
