@@ -7,7 +7,7 @@ Copyright (C) 2018 Hybrid Analysis GmbH
 
 ## Requirements
 
-- [Phantom](https://phantom.us) >= 3.5.206
+- [Phantom](https://phantom.us) >= 3.5.180
 
 Installing the App in Phantom
 ---
