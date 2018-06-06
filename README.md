@@ -1,31 +1,31 @@
 # VxPhantom
-The VxStream Sandbox Phantom App
+The Falcon Sandbox Phantom App
 
-Copyright (C) 2017 Payload Security UG (haftungsbeschränkt)
+Copyright (C) 2018 Hybrid Analysis GmbH
+
 ============
 
 ## Requirements
 
-- [Phantom](https://phantom.us) >= 2.0.291
+- [Phantom](https://phantom.us) >= 3.5.180
 
 Installing the App in Phantom
 ---
 
-#### For Phantom 2.0.
+#### For Phantom 3.5.
 
-- [App Management](https://my.phantom.us/2.0/docs/admin/apps)
-- [Assets Management](https://my.phantom.us/2.0/docs/admin/assets)
-
-#### For Phantom 2.1.
-
-- [App and Assets Management](https://my.phantom.us/2.1/docs/admin/apps_assets)
+- [App & Assets Management](https://my.phantom.us/3.5/docs/admin/apps_assets)
 
 ## Final Notes
+
+Usage
+--
+Should you not be using hybrid-analysis.com as the application server, but a private cloud or on premise instance, please E-Mail support@crowdstrike.com for help on enabling the Phantom integration on your instance.
 
 Testing connectivity
 ---
 
-After creating the VxStream Sandbox asset, we recommended to test the application server connectivity. That way,
+After creating the Falcon Sandbox asset, we recommended to test the application server connectivity. That way,
 you make sure that the provided base URL and API credentials are working correctly.
 
 Creating a new tarball installation file (developers only)

@@ -1,7 +1,7 @@
 # --
 # File: vxstream_view.py
 #
-# Copyright (C) 2017 Payload Security UG (haftungsbeschrankt)
+# Copyright (C) 2018 Hybrid Analysis GmbH
 #
 # --
 
@@ -64,3 +64,17 @@ def display_report_status(provides, all_app_runs, context):
             results.append(ctx_result)
 
     return 'display_report_status.html'
+
+
+def display_url_hash(provides, all_app_runs, context):
+
+    context['results'] = results = []
+    for summary, action_results in all_app_runs:
+        for result in action_results:
+
+            ctx_result = get_ctx_result(result)
+            if (not ctx_result):
+                continue
+            results.append(ctx_result)
+
+    return 'display_url_hash.html'
