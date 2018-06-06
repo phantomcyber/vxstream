@@ -4,7 +4,7 @@
     "description": "This app integrates with Falcon Sandbox Services to provide investigative actions",
     "type": "sandbox",
     "main_module": "vxstream_connector.pyc",
-    "app_version": "1.1.5",
+    "app_version": "1.1.6",
     "package_name": "phantom_vxstream_sandbox",
     "product_vendor": "Hybrid Analysis",
     "product_name": "Falcon Sandbox",
@@ -2740,5 +2740,5 @@
             "versions": "EQ(*)"
         }
     ],
-    "utctime_updated": "2018-06-05T22:59:10.000000Z"
+    "utctime_updated": "2018-06-06T00:16:17.000000Z"
 }
