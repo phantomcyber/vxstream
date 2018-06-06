@@ -1,7 +1,7 @@
 {
     "appid": "8383852c-43dc-4356-ac81-4e6dd65ee23e",
     "name": "Falcon Sandbox",
-    "description": "This App integrates Falcon Sandbox Service and provides actions like 'detonate_file', 'run_query', 'get_result' etc. Every action uses the 'api_key'",
+    "description": "This app integrates with Falcon Sandbox Services to provide investigative actions",
     "type": "sandbox",
     "main_module": "vxstream_connector.pyc",
     "app_version": "1.1.5",
