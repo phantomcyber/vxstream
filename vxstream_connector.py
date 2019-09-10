@@ -483,6 +483,8 @@ class VxStreamConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
 
     def _convert_verdict_name_to_key(self, verdict_name):
+        if not verdict_name:
+            return ''
         return verdict_name.replace(' ', '_')
 
     def _hunt_similar(self, param):
@@ -544,7 +546,9 @@ class VxStreamConnector(BaseConnector):
         data = api_response_json if 'hash' in param else api_response_json['result']
 
         for search_row in data:
-            verdict_summary[self._convert_verdict_name_to_key(search_row['verdict'])] += 1
+            verdict_summary_key = self._convert_verdict_name_to_key(search_row['verdict'])
+            if len(verdict_summary_key):
+                verdict_summary[verdict_summary_key] += 1
             environment = None
             threatscore_verbose = None
 
