@@ -1,4 +1,6 @@
-*.py
+vxstream_connector.py
+vxstream_consts.py
+vxstream_view.py
 .git*
 .DS_Store*
 .cache*
