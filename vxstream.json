@@ -35,6 +35,13 @@
             "description": "API Key",
             "order": 2,
             "required": true
+        },
+        "detonation_timeout_seconds": {
+            "data_type": "numeric",
+            "description": "Detonation Timeout (seconds)",
+            "order": 3,
+            "required": false,
+            "default": 86400
         }
     },
     "actions": [
@@ -2307,6 +2314,10 @@
                     "data_type": "numeric"
                 },
                 {
+                    "data_path": "action_result.summary.sample_url",
+                    "data_type": "string"
+                },
+                {
                     "data_path": "summary.total_objects",
                     "data_type": "numeric"
                 },
@@ -2501,6 +2512,10 @@
                 {
                     "data_path": "action_result.data.*.total_signatures",
                     "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.summary.sample_url",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "summary.total_objects",
@@ -2714,6 +2729,10 @@
                 {
                     "data_path": "action_result.data.*.total_signatures",
                     "data_type": "numeric"
+                },
+                {
+                    "data_path": "action_result.summary.sample_url",
+                    "data_type": "string"
                 },
                 {
                     "data_path": "summary.total_objects",

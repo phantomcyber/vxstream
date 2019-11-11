@@ -355,7 +355,7 @@ class VxStreamConnector(BaseConnector):
 
         return action_result.set_status(phantom.APP_SUCCESS, 'Successfully get summary of sample with Id: \'{}\''.format(param['id']))
 
-    def _detonation_partial(self, param, detonation_api_object):
+    def _detonation_partial(self, param, action_result, detonation_api_object):
         api_response_json = detonation_api_object.get_response_json()
         sample_sha_256 = api_response_json['sha256']
         sample_env_id = param['environment_id']
@@ -365,28 +365,38 @@ class VxStreamConnector(BaseConnector):
         }
         final_check_status_response = None
         start_time_of_checking = time.time()
+        
+        # set sample_url in summary in case timeout occurs
+        action_result.update_summary({'sample_url': self._build_sample_url(sample_id)})
+        
+        # detonation timeout from config
+        detonation_timeout_seconds = int(self.get_config().get(
+            PAYLOAD_SECURITY_CONFIG_DETONATION_TIMEOUT_SECONDS,
+            PAYLOAD_SECURITY_DETONATION_DEFAULT_SECONDS))
 
-        self.save_progress('Successfully submitted chosen element for detonation. Waiting {} seconds to do status checking...'.format(PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
-        for x in range(0, PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS):
+        # calculate # of attempts (seconds / 30 seconds per attempt)
+        num_attempts = detonation_timeout_seconds / 30
+
+        self.save_progress('Successfully submitted chosen element for detonation.')
+        for x in range(0, num_attempts):
             self.debug_print('detonate_debug_print_queue', 'Starting iteration {} of {}. Sleep time is {}.'.format(x, PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS,
-                                                                                                                       PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
-            time.sleep(PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS)
+                                                                                                                       PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
             api_check_state = self._check_status_partial(sample_params)
             api_response_json = api_check_state.get_response_json()
             final_check_status_response = api_response_json
 
             if api_response_json['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS:
-                self.save_progress('Submitted element is processed. Waiting {} seconds to do status checking...'.format(PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
-                for y in range(0, PAYLOAD_SECURITY_DETONATION_PROGRESS_NUMBER_OF_ATTEMPTS):
-                    self.debug_print('detonate_debug_print_progress', 'Starting iteration {} of {}. Sleep time is {}.'.format(y, PAYLOAD_SECURITY_DETONATION_PROGRESS_NUMBER_OF_ATTEMPTS,
-                                                                                                                                  PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
+                self.save_progress('Submitted element is processed.')
+                for y in range(0, num_attempts):
                     time.sleep(PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS)
+                    self.debug_print('detonate_debug_print_progress', 'Starting iteration {} of {}. Sleep time is {}.'.format(y, num_attempts,
+                                                                                                                                  PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
                     api_check_state = self._check_status_partial(sample_params)
                     api_response_json = api_check_state.get_response_json()
                     final_check_status_response = api_response_json
                     self.save_progress(
                         PAYLOAD_SECURITY_MSG_CHECKED_STATE.format(api_response_json['state'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"), y + 1,
-                                                                  PAYLOAD_SECURITY_DETONATION_PROGRESS_NUMBER_OF_ATTEMPTS,
+                                                                  num_attempts,
                                                                   PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
 
                     if api_response_json['state'] in [PAYLOAD_SECURITY_SAMPLE_STATE_SUCCESS, PAYLOAD_SECURITY_SAMPLE_STATE_ERROR]:
@@ -394,8 +404,9 @@ class VxStreamConnector(BaseConnector):
                                          'Got state \'{}\' from \'{}\' state after \'{}\' seconds of work.'.format(api_response_json['state'], PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS,
                                                                                                                    (time.time() - start_time_of_checking)))
                         break
-                else:  # 'else' is ran, when iteration was not broken. When it has happen, break also the outer loop.
-                    continue
+                else:  # 'else' is ran, when iteration was not broken. This means detonation was not finished before the timeout. Return timeout error
+                    if final_check_status_response['state'] in [PAYLOAD_SECURITY_SAMPLE_STATE_IN_QUEUE, PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS]:
+                        raise VxError('Action reached the analysis timeout. Last state is \'{}\'. You can still observe the state using \'check status\' action and after successful analysis, retrieve results by \'get report\' action.'.format(final_check_status_response['state']))
                 break
             elif api_response_json['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_ERROR:
                 self.debug_print('detonate_debug_print_queue_result_status',
@@ -406,9 +417,11 @@ class VxStreamConnector(BaseConnector):
                 break
             else:
                 self.save_progress(
-                    PAYLOAD_SECURITY_MSG_CHECKED_STATE.format(api_response_json['state'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x + 1, PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS,
-                                                              PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
+                    PAYLOAD_SECURITY_MSG_CHECKED_STATE.format(api_response_json['state'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x + 1, num_attempts,
+                                                              PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
 
+                time.sleep(PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS)
+        
         if final_check_status_response['state'] in [PAYLOAD_SECURITY_SAMPLE_STATE_IN_QUEUE, PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS]:
             raise VxError('Action reached the analysis timeout. Last state is \'{}\'. You can still observe the state using \'check status\' action and after successful analysis, retrieve results by \'get report\' action.'.format(final_check_status_response['state']))
         elif final_check_status_response['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_ERROR:
@@ -429,7 +442,7 @@ class VxStreamConnector(BaseConnector):
 
         try:
             self._make_api_call_with_err_handling(api_submit_file_object, 'URL submit failed.')
-            report_api_json_response = self._detonation_partial(param, api_submit_file_object)
+            report_api_json_response = self._detonation_partial(param, action_result, api_submit_file_object)
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
@@ -454,7 +467,7 @@ class VxStreamConnector(BaseConnector):
 
         try:
             self._make_api_call_with_err_handling(api_submit_file_object, 'File submit failed.')
-            report_api_json_response = self._detonation_partial(param, api_submit_file_object)
+            report_api_json_response = self._detonation_partial(param, action_result, api_submit_file_object)
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
@@ -473,7 +486,7 @@ class VxStreamConnector(BaseConnector):
 
         try:
             self._make_api_call_with_err_handling(api_submit_file_object, 'Online file submit failed.')
-            report_api_json_response = self._detonation_partial(param, api_submit_file_object)
+            report_api_json_response = self._detonation_partial(param, action_result, api_submit_file_object)
         except VxError as exc:
             action_result.set_status(phantom.APP_ERROR, '{}'.format(str(exc)))
             return action_result.get_status()
