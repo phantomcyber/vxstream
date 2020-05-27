@@ -68,7 +68,7 @@ class ApiCaller:
         self.phantom.debug_print('request_content_type', self.api_response.headers['Content-Type'])
         self.phantom.debug_print('request_code', self.api_response.status_code)
         if self.api_expected_data_type == self.CONST_EXPECTED_DATA_TYPE_JSON:
-            self.phantom.debug_print('request_content', self.api_response.content)
+            self.phantom.debug_print('request_content', self.api_response.text)
 
         self.api_result_msg = self.prepare_response_msg()
 
