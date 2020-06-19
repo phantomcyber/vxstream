@@ -272,7 +272,7 @@ class VxStreamConnector(BaseConnector):
             try:
                 gzip_file_handle = gzip.GzipFile(fileobj=BytesIO(file_content))
                 f_out.write(gzip_file_handle.read())
-            except Exception as e:
+            except Exception:
                 f_out_name += retrieved_file_extension
                 f_out = open(f_out_name, 'wb')
                 f_out.write(file_content)
@@ -371,7 +371,8 @@ class VxStreamConnector(BaseConnector):
         final_check_status_response = None
         start_time_of_checking = time.time()
 
-        self.save_progress('Successfully submitted chosen element for detonation. Waiting {} seconds to do status checking...'.format(PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
+        self.save_progress('Successfully submitted chosen element for detonation. Waiting {} seconds to do status checking...'.format(
+                                                                                            PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
         for x in range(0, PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS):
             self.debug_print('detonate_debug_print_queue', 'Starting iteration {} of {}. Sleep time is {}.'.format(x, PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS,
                                                                                                                        PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
@@ -383,8 +384,8 @@ class VxStreamConnector(BaseConnector):
             if api_response_json['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS:
                 self.save_progress('Submitted element is processed. Waiting {} seconds to do status checking...'.format(PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
                 for y in range(0, PAYLOAD_SECURITY_DETONATION_PROGRESS_NUMBER_OF_ATTEMPTS):
-                    self.debug_print('detonate_debug_print_progress', 'Starting iteration {} of {}. Sleep time is {}.'.format(y, PAYLOAD_SECURITY_DETONATION_PROGRESS_NUMBER_OF_ATTEMPTS,
-                                                                                                                                  PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
+                    self.debug_print('detonate_debug_print_progress', 'Starting iteration {} of {}. Sleep time is {}.'.format(y,
+                                             PAYLOAD_SECURITY_DETONATION_PROGRESS_NUMBER_OF_ATTEMPTS, PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS))
                     time.sleep(PAYLOAD_SECURITY_DETONATION_PROGRESS_TIME_INTERVAL_SECONDS)
                     api_check_state = self._check_status_partial(sample_params)
                     api_response_json = api_check_state.get_response_json()
@@ -396,29 +397,31 @@ class VxStreamConnector(BaseConnector):
 
                     if api_response_json['state'] in [PAYLOAD_SECURITY_SAMPLE_STATE_SUCCESS, PAYLOAD_SECURITY_SAMPLE_STATE_ERROR]:
                         self.debug_print('detonate_debug_print_progress_result_status',
-                                         'Got state \'{}\' from \'{}\' state after \'{}\' seconds of work.'.format(api_response_json['state'], PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS,
-                                                                                                                   (time.time() - start_time_of_checking)))
+                                         'Got state \'{}\' from \'{}\' state after \'{}\' seconds of work.'.format(api_response_json['state'],
+                                                                  PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS, (time.time() - start_time_of_checking)))
                         break
-                else:  # 'else' is ran, when iteration was not broken. When it has happen, break also the outer loop.
-                    continue
+                # The above loop did not break and hence, we have to exit from the outer loop with whatever may be the current status of the action
                 break
             elif api_response_json['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_ERROR:
                 self.debug_print('detonate_debug_print_queue_result_status',
-                                 'Got state \'{}\' from \'{}\' state after \'{}\' seconds of work.'.format(PAYLOAD_SECURITY_SAMPLE_STATE_ERROR, PAYLOAD_SECURITY_SAMPLE_STATE_IN_QUEUE,
-                                                                                                           (time.time() - start_time_of_checking)))
+                                 'Got state \'{}\' from \'{}\' state after \'{}\' seconds of work.'.format(PAYLOAD_SECURITY_SAMPLE_STATE_ERROR,
+                                        PAYLOAD_SECURITY_SAMPLE_STATE_IN_QUEUE, (time.time() - start_time_of_checking)))
                 break
             elif api_response_json['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_SUCCESS:
                 break
             else:
+                # Here we are waiting for the action to still get In Progress state from the In Queue state and hence, the loop will be exceuted again
                 self.save_progress(
-                    PAYLOAD_SECURITY_MSG_CHECKED_STATE.format(api_response_json['state'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x + 1, PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS,
-                                                              PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
+                    PAYLOAD_SECURITY_MSG_CHECKED_STATE.format(api_response_json['state'], datetime.now().strftime("%Y-%m-%d %H:%M:%S"), x + 1,
+                     PAYLOAD_SECURITY_DETONATION_QUEUE_NUMBER_OF_ATTEMPTS, PAYLOAD_SECURITY_DETONATION_QUEUE_TIME_INTERVAL_SECONDS))
 
         if final_check_status_response['state'] in [PAYLOAD_SECURITY_SAMPLE_STATE_IN_QUEUE, PAYLOAD_SECURITY_SAMPLE_STATE_IN_PROGRESS]:
-            raise VxError('Action reached the analysis timeout. Last state is \'{}\'. You can still observe the state using \'check status\' action and after successful analysis, retrieve results by \'get report\' action.'.format(final_check_status_response['state']))
+            raise VxError('Action reached the analysis timeout. Last state is \'{}\'. You can still observe the state \
+                         using \'check status\' action and after successful analysis, retrieve results by \'get report\' action.'.format(final_check_status_response['state']))
+
         elif final_check_status_response['state'] == PAYLOAD_SECURITY_SAMPLE_STATE_ERROR:
-            raise VxError('During the analysis, error has occurred: \'{}\'. For more possible information, please visit sample page({}) and/or Hybrid Analysis Knowledge Base.'.format(
-                                         final_check_status_response['error'], self._build_sample_url(sample_id)))
+            raise VxError('During the analysis, error has occurred: \'{}\'. For more possible information, please visit sample page({}) and/or Hybrid Analysis Knowledge Base.'
+                                              .format(final_check_status_response['error'], self._build_sample_url(sample_id)))
         else:
             self.save_progress(PAYLOAD_SECURITY_MSG_DETONATION_QUERYING_REPORT)
             partial_results = self._get_report_partial({'id': sample_id})
@@ -441,10 +444,12 @@ class VxStreamConnector(BaseConnector):
 
         action_result.add_data(report_api_json_response)
 
-        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted URL and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted URL and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(
+                                                report_api_json_response['sha256'], param['environment_id']))
 
     def _detonate_file(self, param):
         config = self.get_config()
+
         api_submit_file_object = ApiSubmitFile(config[PAYLOAD_SECURITY_API_KEY], self._base_url, self)
         self.save_progress(PAYLOAD_SECURITY_MSG_SUBMITTING_FILE)
 
@@ -466,7 +471,8 @@ class VxStreamConnector(BaseConnector):
 
         action_result.add_data(report_api_json_response)
 
-        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(
+                                                                 report_api_json_response['sha256'], param['environment_id']))
 
     def _detonate_online_file(self, param):
         config = self.get_config()
@@ -485,7 +491,8 @@ class VxStreamConnector(BaseConnector):
 
         action_result.add_data(report_api_json_response)
 
-        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(report_api_json_response['sha256'], param['environment_id']))
+        return action_result.set_status(phantom.APP_SUCCESS, 'Successfully submitted file and retrieved analysis result. Sample sha256: \'{}\' and environment ID: \'{}\''.format(
+                                                   report_api_json_response['sha256'], param['environment_id']))
 
     def _convert_verdict_name_to_key(self, verdict_name):
         return verdict_name.replace(' ', '_')
@@ -602,7 +609,8 @@ class VxStreamConnector(BaseConnector):
         api_json_response = api_api_key_data_object.get_response_json()
 
         if int(api_json_response['auth_level']) < 100:
-            self.save_progress('You are using API Key with \'{}\' privileges. Some of actions can not work, as they need at least \'default\' privileges. To obtain proper key, please contact with support@hybrid-analysis.com.'.format(api_json_response['auth_level_name']))
+            self.save_progress('You are using API Key with \'{}\' privileges. Some of actions can not work, as they need at least \'default\' privileges.\
+                                             To obtain proper key, please contact with support@hybrid-analysis.com.'.format(api_json_response['auth_level_name']))
 
         self.save_progress(api_api_key_data_object.get_prepared_response_msg())
 
